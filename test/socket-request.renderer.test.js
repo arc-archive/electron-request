@@ -1,6 +1,7 @@
 const assert = require('chai').assert;
 const {SocketRequest} = require('../');
 const chunkedServer = require('./chunked-server');
+const {ArcHeaders} = require('../lib/arc-headers');
 
 global.performance = {
   now: function() {
@@ -38,6 +39,7 @@ describe('Socket request basics', function() {
     method: 'GET',
     headers: 'Host: test.com',
     auth: {
+      method: 'ntlm',
       domain: 'domain.com',
       username: 'test',
       password: 'test'
@@ -104,32 +106,6 @@ describe('Socket request basics', function() {
 
     it('Sets hostHeader property', function() {
       assert.typeOf(request.hostHeader, 'string');
-    });
-  });
-
-  describe('_getPort()', function() {
-    let request;
-    before(function() {
-      request = new SocketRequest(requests[0], opts[0]);
-    });
-    it('Returns number when number is passed', function() {
-      const result = request._getPort(20);
-      assert.equal(result, 20);
-    });
-
-    it('Returns number when number is a string', function() {
-      const result = request._getPort('20');
-      assert.equal(result, 20);
-    });
-
-    it('Returns 443 port from the protocol', function() {
-      const result = request._getPort(0, 'https:');
-      assert.equal(result, 443);
-    });
-
-    it('Returns 80 port from the protocol', function() {
-      const result = request._getPort(undefined, 'http:');
-      assert.equal(result, 80);
     });
   });
 
@@ -298,39 +274,41 @@ describe('Socket request basics', function() {
   });
 
   describe('_addContentLength()', function() {
+    let headers;
+    beforeEach(() => {
+      headers = new ArcHeaders();
+    });
+
     it('Adds content length header', function() {
       const request = new SocketRequest(requests[1], opts[0]);
-      request._addContentLength(requests[1].payload);
-      assert.isAbove(
-        request.arcRequest.headers.toLowerCase().indexOf('content-length: 9'),
-        0
-      );
+      request._addContentLength(requests[1].payload, headers);
+      assert.equal(headers.get('content-length'), 9);
     });
 
     it('Do nothing for GET requests', function() {
       const request = new SocketRequest(requests[3], opts[0]);
       request._addContentLength(requests[2].payload);
-      assert.equal(
-        request.arcRequest.headers.toLowerCase().indexOf('content-length'),
-        -1
-      );
+      assert.isFalse(headers.has('content-length'));
     });
   });
 
   describe('_authorizeNtlm()', function() {
+    let headers;
     let request;
-    before(function() {
+    beforeEach(() => {
+      headers = new ArcHeaders();
       request = new SocketRequest(requests[4], opts[0]);
     });
 
     it('Adds authorization header', function() {
-      request._authorizeNtlm(requests[4].auth);
-      assert.isAbove(request.arcRequest.headers.indexOf('Authorization'), 0);
+      request._authorizeNtlm(requests[4].auth, headers);
+      assert.isTrue(headers.has('Authorization'));
     });
 
     it('Authorization is NTLM', function() {
-      request._authorizeNtlm(requests[4].auth);
-      assert.isAbove(request.arcRequest.headers.indexOf('NTLM '), 0);
+      request._authorizeNtlm(requests[4].auth, headers);
+      const value = headers.get('Authorization');
+      assert.equal(value.indexOf('NTLM '), 0);
     });
   });
 
@@ -393,6 +371,27 @@ describe('Socket request basics', function() {
       return request.prepareMessage()
       .then((result) => {
         assert.lengthOf(result.toString().split('\n'), 7);
+      });
+    });
+
+    it('Adds NTLM request headers from payload processing', () => {
+      const request = new SocketRequest(requests[4], opts[0]);
+      return request.prepareMessage()
+      .then((result) => {
+        assert.equal(request.arcRequest.headers.indexOf('NTLM '), -1,
+          'Headers are not altered');
+        assert.isAbove(result.toString().indexOf('NTLM '), 0,
+        'Adds headers to body');
+      });
+    });
+
+    it('Adds content length header', () => {
+      const request = new SocketRequest(requests[1], opts[0]);
+      return request.prepareMessage()
+      .then((result) => {
+        const search = request.arcRequest.headers.indexOf('content-length: 9');
+        assert.isAbove(search, 0);
+        assert.isAbove(result.toString().indexOf('content-length: 9'), 0);
       });
     });
   });

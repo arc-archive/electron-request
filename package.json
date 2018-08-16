@@ -6,7 +6,8 @@
   "scripts": {
     "test": "electron-mocha --renderer test/*.renderer.test.js",
     "test-receiving": "electron-mocha --renderer test/socket-request-receiving.renderer.test.js",
-    "test-basic": "electron-mocha --renderer test/socket-request.renderer.test.js"
+    "test-basic": "electron-mocha --renderer test/socket-request.renderer.test.js",
+    "test-test": "electron-mocha --renderer test/utils.renderer.test.js"
   },
   "author": "Pawel Psztyc",
   "license": "Apache-2.0",
