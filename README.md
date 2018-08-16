@@ -7,4 +7,31 @@ with detailed response.
 
 The detailed response contains information about redirects and timings similar to ones presented by Chrome Dev Tools.
 
-This library is still under development and it's being extracted from ARC main application code base.
+## Usage
+
+```javascript
+const {SocketRequest} = require('@advanced-rest-client/electron-request');
+
+const opts = {
+  timeout: 30000,
+  hosts: [{from: 'domain.com', to: 'other.com'}],
+  followRedirects: true
+};
+
+const request = {
+  url: 'http://api.domain.com',
+  method: 'GET',
+  headers: 'x-test: true'
+};
+
+const connection = new SocketRequest(request, opts);
+request.on('load', (response, request) => {});
+request.on('error', (error) => {});
+connection.send()
+.then(() => {
+  console.log('Request message sent.');
+})
+.catch((cause) => {
+  console.error('Connection error');
+});
+```
