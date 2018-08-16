@@ -4,17 +4,22 @@
   "description": "ARC socket request for electron",
   "main": "index.js",
   "scripts": {
-    "test": "electron-mocha --renderer test/*.renderer.test.js"
+    "test": "electron-mocha --renderer test/*.renderer.test.js",
+    "test-receiving": "electron-mocha --renderer test/socket-request-receiving.renderer.test.js",
+    "test-basic": "electron-mocha --renderer test/socket-request.renderer.test.js"
   },
   "author": "Pawel Psztyc",
   "license": "Apache-2.0",
   "dependencies": {
+    "@advanced-rest-client/cookie-parser": "^2.0.0",
     "electron-log": "^2.2.16"
   },
   "devDependencies": {
     "chai": "^4.1.2",
     "electron": "^2.0.7",
     "electron-mocha": "^6.0.4",
-    "mocha": "^4.1.0"
+    "mocha": "^4.1.0",
+    "chance": "^1.0.13",
+    "ssl-root-cas": "^1.2.5"
   }
 }
