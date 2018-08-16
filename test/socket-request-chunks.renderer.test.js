@@ -1,5 +1,5 @@
 const assert = require('chai').assert;
-const {SocketRequest} = require('../lib/socket-request.js');
+const {SocketRequest} = require('../');
 
 global.performance = {
   now: function() {
@@ -52,10 +52,10 @@ describe('Data buffer responses', function() {
         103, 116, 104, 58, 32, 49, 49, 52, 13, 10])
     ];
     const headersMap = {
-      'content-type': 'application/json',
-      'content-length': '114',
-      'server': 'Werkzeug/0.14.1 Python/2.7.14',
-      'date': 'Thu, 21 Jun 2018 18:30:51 GMT'
+      'Content-Type': 'application/json',
+      'Content-Length': '114',
+      'Server': 'Werkzeug/0.14.1 Python/2.7.14',
+      'Date': 'Thu, 21 Jun 2018 18:30:51 GMT'
     };
     let request;
     beforeEach(function() {
