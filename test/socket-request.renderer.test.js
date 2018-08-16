@@ -434,13 +434,17 @@ describe('Socket request basics', function() {
     });
 
     it('Sets messageSent property on arcRequest', function() {
-      request.writeMessage(message);
-      assert.isTrue(request.arcRequest.sentHttpMessage === message);
+      return request.writeMessage(message)
+      .then(() => {
+        assert.typeOf(request.arcRequest.sentHttpMessage, 'string');
+      });
     });
 
     it('Sets messageSendStart property on stats object', function() {
-      request.writeMessage(message);
-      assert.typeOf(request.stats.messageSendStart, 'number');
+      return request.writeMessage(message)
+      .then(() => {
+        assert.typeOf(request.stats.messageSendStart, 'number');
+      });
     });
 
     it('Sets waitingStart property on stats object', function() {
