@@ -15,26 +15,31 @@ describe('Socket request basics', function() {
   const sslPort = 8124;
 
   const requests = [{
+    id: 'r-1',
     url: `http://localhost:${httpPort}/api/endpoint?query=param`,
     method: 'GET',
     headers: 'Host: test.com\nContent-Length: 0',
     payload: 'abc'
   }, {
+    id: 'r-2',
     url: `http://localhost:${httpPort}/api/endpoint?query=param`,
     method: 'POST',
     headers: 'content-type: text/plain',
     payload: Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74])
   }, {
+    id: 'r-3',
     url: `http://localhost:${httpPort}/api/endpoint?query=param`,
     method: 'POST',
     headers: 'Host: test.com\nContent-Length: 12',
     payload: Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74])
   }, {
+    id: 'r-4',
     url: `http://localhost:${httpPort}/api/endpoint?query=param`,
     method: 'GET',
     headers: 'Host: test.com',
     payload: ''
   }, {
+    id: 'r-5',
     url: `http://localhost:${httpPort}/api/endpoint?query=param`,
     method: 'GET',
     headers: 'Host: test.com',
@@ -462,7 +467,8 @@ describe('Socket request basics', function() {
     });
 
     it('Emits loadstart event', function(done) {
-      request.once('loadstart', function() {
+      request.once('loadstart', function(id) {
+        assert.equal(id, requests[0].id);
         done();
       });
       request.writeMessage(message);
@@ -561,14 +567,15 @@ describe('Socket request basics', function() {
     });
 
     it('Dispatches headersreceived event', function(done) {
-      request.once('headersreceived', function() {
+      request.once('headersreceived', function(id) {
+        assert.equal(id, requests[1].id);
         done();
       });
       request._parseHeaders(headersBuf);
     });
 
     it('The headersreceived event contains returnValue', function(done) {
-      request.once('headersreceived', function(detail) {
+      request.once('headersreceived', function(id, detail) {
         assert.isTrue(detail.returnValue);
         done();
       });
@@ -576,7 +583,7 @@ describe('Socket request basics', function() {
     });
 
     it('The headersreceived event contains value property', function(done) {
-      request.once('headersreceived', function(detail) {
+      request.once('headersreceived', function(id, detail) {
         assert.ok(detail.value);
         done();
       });
@@ -584,11 +591,86 @@ describe('Socket request basics', function() {
     });
 
     it('Aborts the request when the event is canceled', function() {
-      request.once('headersreceived', function(detail) {
+      request.once('headersreceived', function(id, detail) {
         detail.returnValue = false;
       });
       request._parseHeaders(headersBuf);
       assert.isTrue(request.aborted);
+    });
+  });
+
+  describe('Events', function() {
+    let request;
+    beforeEach(function() {
+      request = new SocketRequest(requests[1], opts[0]);
+    });
+
+    it('Dispatches "loadstart" event', function(done) {
+      request = new SocketRequest(requests[0], opts[0]);
+      let called = false;
+      request.once('load', function() {
+        assert.isTrue(called);
+        done();
+      });
+      request.once('loadstart', function(id) {
+        assert.equal(id, requests[0].id);
+        called = true;
+      });
+      request.once('error', function(id, error) {
+        done(error);
+      });
+      request.send();
+    });
+
+    it('Dispatches "firstbyte" event', function(done) {
+      request = new SocketRequest(requests[0], opts[0]);
+      let called = false;
+      request.once('load', function() {
+        assert.isTrue(called);
+        done();
+      });
+      request.once('firstbyte', function(id) {
+        assert.equal(id, requests[0].id);
+        called = true;
+      });
+      request.once('error', function(id, error) {
+        done(error);
+      });
+      request.send();
+    });
+
+    it('Dispatches "loadend" event', function(done) {
+      request = new SocketRequest(requests[0], opts[0]);
+      let called = false;
+      request.once('load', function() {
+        assert.isTrue(called);
+        done();
+      });
+      request.once('loadend', function(id) {
+        assert.equal(id, requests[0].id);
+        called = true;
+      });
+      request.once('error', function(id, error) {
+        done(error);
+      });
+      request.send();
+    });
+
+    it('Dispatches "headersreceived" event', function(done) {
+      request = new SocketRequest(requests[0], opts[0]);
+      let called = false;
+      request.once('load', function() {
+        assert.isTrue(called);
+        done();
+      });
+      request.once('headersreceived', function(id) {
+        assert.equal(id, requests[0].id);
+        called = true;
+      });
+      request.once('error', function(id, error) {
+        done(error);
+      });
+      request.send();
     });
   });
 });
