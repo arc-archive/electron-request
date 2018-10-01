@@ -1,5 +1,5 @@
 const assert = require('chai').assert;
-const {SocketRequest} = require('../');
+const {SocketRequest} = require('../../');
 
 global.performance = {
   now: function() {
@@ -12,7 +12,8 @@ describe('Data buffer responses', function() {
     url: `http://localhost:8080/api/endpoint?query=param`,
     method: 'GET',
     headers: 'Host: test.com\nContent-Length: 0',
-    payload: 'abc'
+    payload: 'abc',
+    id: 'test1'
   }];
 
   const opts = [{
@@ -73,7 +74,7 @@ describe('Data buffer responses', function() {
     it('Reads status line', function() {
       request._processSocketMessage(parts[0]);
       assert.equal(request._response.status, 200, 'Status code is set');
-      assert.equal(request._response.statusMessage, 'OK', 'Status message is set');
+      assert.equal(request._response.statusText, 'OK', 'Status message is set');
     });
 
     it('Puts headers from part #1 after processing status to temp variable', () => {
@@ -99,7 +100,7 @@ describe('Data buffer responses', function() {
     it('Status is set', function() {
       processMessages();
       assert.equal(request._response.status, 200, 'Status code is set');
-      assert.equal(request._response.statusMessage, 'OK', 'Status message is set');
+      assert.equal(request._response.statusText, 'OK', 'Status message is set');
     });
 
     it('Headers are set', function() {

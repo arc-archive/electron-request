@@ -1,5 +1,5 @@
 const assert = require('chai').assert;
-const {ArcHeaders} = require('../lib/arc-headers');
+const {ArcHeaders} = require('../../lib/arc-headers');
 
 describe('ArcHeaders tests', function() {
   [

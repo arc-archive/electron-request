@@ -1,7 +1,7 @@
 const assert = require('chai').assert;
-const {SocketRequest} = require('../');
-const chunkedServer = require('./chunked-server');
-const {ArcHeaders} = require('../lib/arc-headers');
+const {SocketRequest} = require('../../');
+const chunkedServer = require('../chunked-server');
+const {ArcHeaders} = require('../../lib/arc-headers');
 
 global.performance = {
   now: function() {
@@ -141,8 +141,8 @@ describe('Socket request basics', function() {
       return request._connect(httpPort, host)
       .then((client) => {
         client.destroy();
-        assert.typeOf(request.stats.connect, 'number', 'connect stat is set');
-        assert.typeOf(request.stats.dns, 'number', 'dns stat is set');
+        assert.typeOf(request.stats.connectionTime, 'number', 'connectionTime stat is set');
+        assert.typeOf(request.stats.lookupTime, 'number', 'lookupTime stat is set');
       });
     });
   });
@@ -174,9 +174,11 @@ describe('Socket request basics', function() {
       return request._connectTls(sslPort, host)
       .then((client) => {
         client.destroy();
-        assert.typeOf(request.stats.connect, 'number', 'connect stat is set');
-        assert.typeOf(request.stats.dns, 'number', 'dns stat is set');
-        assert.typeOf(request.stats.ssl, 'number', 'ssl stat is set');
+        assert.typeOf(request.stats.connectionTime, 'number', 'connectionTime stat is set');
+        assert.typeOf(request.stats.lookupTime, 'number', 'lookupTime stat is set');
+        assert.typeOf(request.stats.secureStartTime, 'number', 'secureStartTime stat is set');
+        assert.typeOf(request.stats.secureConnectedTime, 'number',
+          'secureConnectedTime stat is set');
       });
     });
   });
@@ -227,73 +229,6 @@ describe('Socket request basics', function() {
         assert.isTrue(client._idleTimeout === opts[0].timeout);
         createdClient = client;
       });
-    });
-  });
-
-  describe('_payloadMessage()', function() {
-    let request;
-    before(function() {
-      request = new SocketRequest(requests[0], opts[0]);
-    });
-
-    it('Resolves to promise', function() {
-      let result = request._payloadMessage();
-      assert.typeOf(result, 'promise');
-    });
-
-    it('Returns undefined for missing argument', function() {
-      return request._payloadMessage()
-      .then((result) => assert.isUndefined(result));
-    });
-
-    it('Transforms string', function() {
-      let compare = Buffer.from([
-        0x74, 0x65, 0x73, 0x74, 0x0d, 0x0a, 0x74, 0x65, 0x73, 0x74
-      ]);
-      return request._payloadMessage('test\ntest')
-      .then((result) => assert.isTrue(result.equals(compare)));
-    });
-
-    it('Transforms ArrayBuffer', function() {
-      let compare = Buffer.from([
-        0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74
-      ]);
-      let payload = new Uint8Array([
-        116, 101, 115, 116, 10, 116, 101, 115, 116
-      ]).buffer;
-      return request._payloadMessage(payload)
-      .then((result) => {
-        assert.isTrue(result.equals(compare));
-      });
-    });
-
-    it('Returns the same Buffer', function() {
-      let compare = Buffer.from([
-        0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74
-      ]);
-      return request._payloadMessage(compare)
-      .then((result) => {
-        assert.isTrue(result === compare);
-      });
-    });
-  });
-
-  describe('_addContentLength()', function() {
-    let headers;
-    beforeEach(() => {
-      headers = new ArcHeaders();
-    });
-
-    it('Adds content length header', function() {
-      const request = new SocketRequest(requests[1], opts[0]);
-      request._addContentLength(requests[1].payload, headers);
-      assert.equal(headers.get('content-length'), 9);
-    });
-
-    it('Do nothing for GET requests', function() {
-      const request = new SocketRequest(requests[3], opts[0]);
-      request._addContentLength(requests[2].payload);
-      assert.isFalse(headers.has('content-length'));
     });
   });
 
@@ -445,24 +380,17 @@ describe('Socket request basics', function() {
       });
     });
 
-    it('Sets messageSendStart property on stats object', function() {
+    it('Sets messageStart property on stats object', function() {
       return request.writeMessage(message)
       .then(() => {
-        assert.typeOf(request.stats.messageSendStart, 'number');
+        assert.typeOf(request.stats.messageStart, 'number');
       });
     });
 
-    it('Sets waitingStart property on stats object', function() {
+    it('Sets sentTime property on stats object', function() {
       return request.writeMessage(message)
       .then(() => {
-        assert.typeOf(request.stats.waitingStart, 'number');
-      });
-    });
-
-    it('Sets send property on stats object', function() {
-      return request.writeMessage(message)
-      .then(() => {
-        assert.typeOf(request.stats.send, 'number');
+        assert.typeOf(request.stats.sentTime, 'number');
       });
     });
 
@@ -471,61 +399,8 @@ describe('Socket request basics', function() {
         assert.equal(id, requests[0].id);
         done();
       });
+      request.once('error', (e) => done(e));
       request.writeMessage(message);
-    });
-  });
-
-  describe('headersToObject()', function() {
-    let request;
-    before(function() {
-      request = new SocketRequest(requests[1], opts[0]);
-    });
-
-    it('Result with empty object when no argument', function() {
-      const result = request.headersToObject();
-      assert.typeOf(result, 'object');
-      assert.lengthOf(Object.keys(result), 0);
-    });
-
-    it('Result with empty object when empty string', function() {
-      const result = request.headersToObject('');
-      assert.lengthOf(Object.keys(result), 0);
-    });
-
-    it('Result with empty object when argument is not string', function() {
-      const result = request.headersToObject(2);
-      assert.lengthOf(Object.keys(result), 0);
-    });
-
-    it('Parses header string', function() {
-      let headers = 'Content-Type: test/plain\n';
-      headers += 'x-header: x-value';
-      const result = request.headersToObject(headers);
-      const keys = Object.keys(result);
-      assert.lengthOf(keys, 2);
-      assert.equal(result['x-header'], 'x-value');
-      assert.equal(result['Content-Type'], 'test/plain');
-    });
-
-    it('Ignores empty lines', function() {
-      let headers = 'Content-Type: test/plain\n';
-      headers += '\n';
-      headers += 'x-header: x-value';
-      const result = request.headersToObject(headers);
-      const keys = Object.keys(result);
-      assert.lengthOf(keys, 2);
-      assert.equal(result['x-header'], 'x-value');
-      assert.equal(result['Content-Type'], 'test/plain');
-    });
-
-    it('Accepts empty values', function() {
-      let headers = 'Content-Type: \n';
-      headers += 'x-header: x-value';
-      const result = request.headersToObject(headers);
-      const keys = Object.keys(result);
-      assert.lengthOf(keys, 2);
-      assert.equal(result['x-header'], 'x-value');
-      assert.equal(result['Content-Type'], '');
     });
   });
 
@@ -571,6 +446,7 @@ describe('Socket request basics', function() {
         assert.equal(id, requests[1].id);
         done();
       });
+      request.once('error', (e) => done(e));
       request._parseHeaders(headersBuf);
     });
 
@@ -579,6 +455,7 @@ describe('Socket request basics', function() {
         assert.isTrue(detail.returnValue);
         done();
       });
+      request.once('error', (e) => done(e));
       request._parseHeaders(headersBuf);
     });
 
@@ -587,6 +464,7 @@ describe('Socket request basics', function() {
         assert.ok(detail.value);
         done();
       });
+      request.once('error', (e) => done(e));
       request._parseHeaders(headersBuf);
     });
 
@@ -616,7 +494,7 @@ describe('Socket request basics', function() {
         assert.equal(id, requests[0].id);
         called = true;
       });
-      request.once('error', function(id, error) {
+      request.once('error', function(error) {
         done(error);
       });
       request.send();
@@ -633,7 +511,7 @@ describe('Socket request basics', function() {
         assert.equal(id, requests[0].id);
         called = true;
       });
-      request.once('error', function(id, error) {
+      request.once('error', function(error) {
         done(error);
       });
       request.send();
@@ -650,7 +528,7 @@ describe('Socket request basics', function() {
         assert.equal(id, requests[0].id);
         called = true;
       });
-      request.once('error', function(id, error) {
+      request.once('error', function(error) {
         done(error);
       });
       request.send();
@@ -667,7 +545,7 @@ describe('Socket request basics', function() {
         assert.equal(id, requests[0].id);
         called = true;
       });
-      request.once('error', function(id, error) {
+      request.once('error', function(error) {
         done(error);
       });
       request.send();
