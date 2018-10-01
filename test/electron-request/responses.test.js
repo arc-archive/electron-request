@@ -36,7 +36,7 @@ describe('Responses test', function() {
   });
 });
 
-describe.only('Stats tests', function() {
+describe('Stats tests', function() {
   it('Has stast object', (done) => {
     const request = new ElectronRequest({
       id: 'test',
