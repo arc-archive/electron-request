@@ -1,6 +1,6 @@
 const assert = require('chai').assert;
-const {PayloadSupport} = require('../lib/payload-support');
-const {ArcHeaders} = require('../lib/arc-headers');
+const {PayloadSupport} = require('../../lib/payload-support');
+const {ArcHeaders} = require('../../lib/arc-headers');
 
 describe('PayloadSupport tests', function() {
   describe('blob2buffer()', function() {

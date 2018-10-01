@@ -1,5 +1,5 @@
 const assert = require('chai').assert;
-const {HostRulesEval} = require('../lib/hosts-eval');
+const {HostRulesEval} = require('../../lib/hosts-eval');
 
 describe('HostRulesEval tests', function() {
   describe('_createRuleRe()', function() {

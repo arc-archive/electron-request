@@ -1,10 +1,10 @@
 {
   "name": "@advanced-rest-client/electron-request",
-  "version": "1.0.0-rc4",
+  "version": "1.0.0-rc5",
   "description": "ARC socket request for electron",
   "main": "index.js",
   "scripts": {
-    "test": "electron-mocha --renderer test/*.renderer.test.js",
+    "test": "electron-mocha --renderer test/**/*.test.js",
     "test-receiving": "electron-mocha --renderer test/socket-request-receiving.renderer.test.js",
     "test-basic": "electron-mocha --renderer test/socket-request.renderer.test.js",
     "test-test": "electron-mocha --renderer test/utils.renderer.test.js"
@@ -13,7 +13,10 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@advanced-rest-client/cookie-parser": "^2.0.0",
-    "electron-log": "^2.2.16"
+    "electron-log": "^2.2.16",
+    "iltorb": "^2.4.0",
+    "install": "^0.12.1",
+    "npm": "^6.4.1"
   },
   "devDependencies": {
     "chai": "^4.1.2",

@@ -1,6 +1,6 @@
 const assert = require('chai').assert;
-const {SocketRequest} = require('../');
-const chunkedServer = require('./chunked-server');
+const {SocketRequest} = require('../../');
+const chunkedServer = require('../chunked-server');
 
 global.performance = {
   now: function() {
@@ -16,7 +16,8 @@ describe('Socket request - receiving data', function() {
     url: `http://localhost:${httpPort}/api/endpoint?query=param`,
     method: 'GET',
     headers: 'Host: test.com\nContent-Length: 0',
-    payload: 'abc'
+    payload: 'abc',
+    id: 'test1'
   }];
 
   const opts = [{
@@ -39,7 +40,7 @@ describe('Socket request - receiving data', function() {
 
     it('Receives chunked response.', function(done) {
       request = new SocketRequest(requests[0], opts[0]);
-      request.once('load', function(response) {
+      request.once('load', function(id, response) {
         let parts = response.payload.toString().split('\n');
         assert.lengthOf(parts, 6);
         for (let i = 0; i < 5; i++) {

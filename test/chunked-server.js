@@ -101,8 +101,12 @@ exports.startServer = function(httpPort, sslPort) {
 };
 
 exports.stopServer = function() {
-  Object.keys(socketMap).forEach((socketKey) =>
-      socketMap[socketKey].destroy());
+  Object.keys(socketMap).forEach((socketKey) => {
+    if (socketMap[socketKey].destroyed) {
+      return;
+    }
+    socketMap[socketKey].destroy();
+  });
   const p1 = new Promise((resolve) => {
     srvs.srv.close(() => resolve());
   });
