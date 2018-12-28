@@ -2,6 +2,7 @@ const assert = require('chai').assert;
 const {ElectronRequest} = require('../../');
 
 describe('Responses test', function() {
+  this.timeout(5000);
   const requests = [{
     id: 'r-1',
     url: 'http://localhost/image',

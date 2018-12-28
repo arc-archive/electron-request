@@ -37,6 +37,7 @@ describe('Responses test', function() {
 });
 
 describe('Stats tests', function() {
+  this.timeout(5000);
   it('Has stast object', (done) => {
     const request = new ElectronRequest({
       id: 'test',
