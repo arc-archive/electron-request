@@ -25,6 +25,14 @@ describe('RequestOptions', function() {
         assert.lengthOf(options.validationWarnings, 1);
       });
 
+      it('Ignores "undefined" missmatch', function() {
+        const options = new RequestOptions();
+        options._validateOptionsList({
+          sentMessageLimit: undefined
+        });
+        assert.lengthOf(options.validationWarnings, 0);
+      });
+
       it('Sets default value for type missmatch', function() {
         const options = new RequestOptions();
         options._validateOptionsList({
