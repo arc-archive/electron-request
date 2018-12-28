@@ -1,4 +1,5 @@
 const assert = require('chai').assert;
+const url = require('url');
 const {ElectronRequest} = require('../../');
 
 describe('Electron request basics', function() {
@@ -20,6 +21,12 @@ describe('Electron request basics', function() {
     url: 'https://google.com',
     method: 'GET',
     headers: 'Host: localhost\nContent-Length: 0',
+    payload: 'abc'
+  }, {
+    id: 'r-4',
+    url: 'https://api.com:5123/path?qp1=v1&qp2=v2#test',
+    method: 'POST',
+    headers: 'Host: localhost\nContent-Length: 3\nx-test: true',
     payload: 'abc'
   }];
 
@@ -138,6 +145,109 @@ describe('Electron request basics', function() {
         const search = request.arcRequest.headers.indexOf('content-length: 9');
         assert.isAbove(search, 0);
       });
+    });
+  });
+
+  describe('_createGenericOptions()', () => {
+    let request;
+    before(function() {
+      request = new ElectronRequest(requests[3], opts[0]);
+    });
+
+    it('Returns an object', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.typeOf(result, 'object');
+    });
+
+    it('Sets protocol', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.equal(result.protocol, 'https:');
+    });
+
+    it('Sets slashes', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.isTrue(result.slashes);
+    });
+
+    it('Sets host', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.equal(result.host, 'api.com:5123');
+    });
+
+    it('Sets port', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.equal(result.port, '5123');
+    });
+
+    it('Sets hostname', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.equal(result.hostname, 'api.com');
+    });
+
+    it('Sets hash', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.equal(result.hash, '#test');
+    });
+
+    it('Sets search', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.equal(result.search, '?qp1=v1&qp2=v2');
+    });
+
+    it('Sets pathname', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.equal(result.pathname, '/path');
+    });
+
+    it('Sets path', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.equal(result.path, '/path?qp1=v1&qp2=v2');
+    });
+
+    it('Sets href', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.equal(result.href, 'https://api.com:5123/path?qp1=v1&qp2=v2#test');
+    });
+
+    it('Sets method', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.equal(result.method, 'POST');
+    });
+
+    it('Sets headers', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.typeOf(result.headers, 'object');
+    });
+
+    it('Sets header #1', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.equal(result.headers.Host, 'localhost');
+    });
+
+    it('Sets header #2', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.equal(result.headers['Content-Length'], '3');
+    });
+
+    it('Sets header #3', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.equal(result.headers['x-test'], 'true');
     });
   });
 
