@@ -49,6 +49,11 @@ describe('Socket request basics', function() {
       username: 'test',
       password: 'test'
     }
+  }, {
+    id: 'r-66',
+    url: 'http://localhost/get',
+    method: 'GET',
+    headers: 'x-test: true'
   }];
 
   const opts = [{
@@ -188,7 +193,7 @@ describe('Socket request basics', function() {
     let createdClient;
 
     before(function() {
-      request = new SocketRequest(requests[0], opts[0]);
+      request = new SocketRequest(requests[5], opts[0]);
     });
 
     afterEach(function() {
@@ -219,14 +224,6 @@ describe('Socket request basics', function() {
       return request.connect()
       .then((client) => {
         assert.isTrue(request.socket === client);
-        createdClient = client;
-      });
-    });
-
-    it('Sets socket timeout', function() {
-      return request.connect()
-      .then((client) => {
-        assert.isTrue(client._idleTimeout === opts[0].timeout);
         createdClient = client;
       });
     });
