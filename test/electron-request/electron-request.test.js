@@ -251,6 +251,76 @@ describe('Electron request basics', function() {
     });
   });
 
+  describe('_addSslOptions()', () => {
+    let request;
+    let options;
+    before(function() {
+      request = new ElectronRequest(requests[3], opts[0]);
+      options = {};
+    });
+
+    it('Sets HTTP agent', () => {
+      request._addSslOptions(options);
+      assert.typeOf(options.agent, 'object');
+    });
+
+    it('Adds SSL certificate ignore options', () => {
+      request.opts.validateCertificates = true;
+      request._addSslOptions(options);
+      assert.typeOf(options.checkServerIdentity, 'function');
+    });
+
+    it('Adds SSL certificate validation options', () => {
+      request.opts.validateCertificates = false;
+      request._addSslOptions(options);
+      assert.isFalse(options.rejectUnauthorized);
+      assert.isFalse(options.requestOCSP);
+    });
+  });
+
+  describe('Starts handlers', () => {
+    let request;
+    before(function() {
+      request = new ElectronRequest(requests[3], opts[0]);
+    });
+
+    it('Sets lookupTime', () => {
+      request._lookupHandler();
+      assert.typeOf(request.stats.lookupTime, 'number');
+    });
+
+    it('Sets secureConnectedTime', () => {
+      request._secureConnectHandler();
+      assert.typeOf(request.stats.secureConnectedTime, 'number');
+    });
+
+    it('Sets secureConnectedTime', () => {
+      request._connectHandler();
+      assert.typeOf(request.stats.connectedTime, 'number');
+    });
+
+    it('Sets secureStartTime', () => {
+      request._connectHandler();
+      assert.typeOf(request.stats.secureStartTime, 'number');
+    });
+
+    it('Sets sentTime', () => {
+      request._sendEndHandler();
+      assert.typeOf(request.stats.sentTime, 'number');
+    });
+
+    it('Sets sentTime only once', (done) => {
+      request._sendEndHandler();
+      const t1 = request.stats.sentTime;
+      setTimeout(() => {
+        request._sendEndHandler();
+        const t2 = request.stats.sentTime;
+        assert.equal(t1, t2);
+        done();
+      });
+    });
+  });
+
   describe('Events', function() {
     let request;
 
