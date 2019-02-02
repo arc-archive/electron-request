@@ -97,3 +97,43 @@ Hosts table. Each rule must have `from` and `to` properties.
 ### `sentMessageLimit`
 
 A limit of characters to include into the `sentHttpMessage` property of the request object. 0 to disable limit. Default to 2048.
+
+## Running tests
+
+You need [Docker](https://www.docker.com/products/docker-desktop) to run the test as they uses `kennethreitz/httpbin` image.
+
+Run this command to download the image:
+
+```
+docker pull kennethreitz/httpbin
+```
+
+Then run the image:
+```
+docker run -d -p 80:80 kennethreitz/httpbin
+```
+
+Check if instance is running:
+
+```
+docker ps -a
+```
+
+This should print something like:
+
+```
+CONTAINER ID        IMAGE                      COMMAND                  CREATED             STATUS           PORTS                NAMES
+e4bb74785018        kennethreitz/httpbin       "gunicorn -b 0.0.0.0…"   8 seconds ago       Up 6 seconds     0.0.0.0:80->80/tcp   condescending_kalam
+```
+
+Run the tests:
+
+```
+npm test
+```
+
+Finally kill the pod:
+
+```
+docker stop e4bb74785018
+```
