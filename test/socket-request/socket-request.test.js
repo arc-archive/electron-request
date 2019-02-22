@@ -54,6 +54,17 @@ describe('Socket request basics', function() {
     url: 'http://localhost/get',
     method: 'GET',
     headers: 'x-test: true'
+  }, {
+    id: 'r-7',
+    url: 'http://localhost:8080/api/endpoint?query=param#access_token=test',
+    method: 'GET',
+    headers: 'Host: test.com',
+    auth: {
+      method: 'ntlm',
+      domain: 'domain.com',
+      username: 'test',
+      password: 'test'
+    }
   }];
 
   const opts = [{
@@ -250,38 +261,46 @@ describe('Socket request basics', function() {
   });
 
   describe('_prepareMessage()', function() {
-    let request;
-    before(function() {
-      request = new SocketRequest(requests[1], opts[0]);
-    });
-
     it('Returns buffer', function() {
+      const request = new SocketRequest(requests[1], opts[0]);
       const result = request._prepareMessage();
       assert.isTrue(result instanceof Buffer);
     });
 
     it('Contains status message', function() {
+      const request = new SocketRequest(requests[1], opts[0]);
       const result = request._prepareMessage().toString();
       assert.equal(result.split('\n')[0],
         'POST /api/endpoint?query=param HTTP/1.1\r');
     });
 
-    it('Adds Host header', function() {
+    it('Removes hash from the URL', function() {
+      const request = new SocketRequest(requests[6], opts[0]);
       const result = request._prepareMessage().toString();
-      assert.equal(result.split('\n')[1], 'Host: localhost:8123\r');
+      assert.equal(result.split('\n')[0],
+        'GET /api/endpoint?query=param HTTP/1.1\r');
     });
 
-    it('Adds rest of the headers', function() {
+    it('Adds Host header', function() {
+      const request = new SocketRequest(requests[1], opts[0]);
+      const result = request._prepareMessage().toString();
+      assert.equal(result.split('\n')[1], `Host: localhost:${httpPort}\r`);
+    });
+
+    it('Adds the rest of the headers', function() {
+      const request = new SocketRequest(requests[1], opts[0]);
       const result = request._prepareMessage().toString();
       assert.equal(result.split('\n')[2], 'content-type: text/plain\r');
     });
 
     it('Adds empty line after headers', function() {
+      const request = new SocketRequest(requests[1], opts[0]);
       const result = request._prepareMessage().toString();
       assert.equal(result.split('\n')[3], '\r');
     });
 
     it('Adds payload message', function() {
+      const request = new SocketRequest(requests[1], opts[0]);
       const result = request._prepareMessage(requests[1].payload).toString();
       assert.equal(result.split('\n')[4], 'test');
       assert.equal(result.split('\n')[5], 'test');
