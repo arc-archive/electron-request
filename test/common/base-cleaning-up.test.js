@@ -1,11 +1,11 @@
 const assert = require('chai').assert;
-const {BaseRequest} = require('../../lib/base-request');
+const { BaseRequest } = require('../../');
 
 describe('BaseRequest - cleaning up', function() {
   const requestData = {
     method: 'GET',
     url: 'https://domain.com',
-    id: 'test-id'
+    id: 'test-id',
   };
 
   it('_cleanUp()', () => {
@@ -13,7 +13,7 @@ describe('BaseRequest - cleaning up', function() {
     base.redirects = [];
     base._response = {};
     base._rawBody = Buffer.from('test');
-    base.stats = {time: Date.now()};
+    base.stats = { time: Date.now() };
     base._cleanUp();
     assert.isUndefined(base.redirects);
     assert.isUndefined(base._response);
@@ -26,7 +26,7 @@ describe('BaseRequest - cleaning up', function() {
     base.redirects = ['test'];
     base._response = {};
     base._rawBody = Buffer.from('test');
-    base.stats = {time: Date.now()};
+    base.stats = { time: Date.now() };
     base._cleanUpRedirect();
     assert.deepEqual(base.redirects, ['test']);
     assert.isUndefined(base._response);

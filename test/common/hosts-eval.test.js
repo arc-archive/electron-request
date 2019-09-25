@@ -1,5 +1,5 @@
 const assert = require('chai').assert;
-const {HostRulesEval} = require('../../lib/hosts-eval');
+const { HostRulesEval } = require('../../');
 
 describe('HostRulesEval tests', function() {
   describe('_createRuleRe()', function() {
@@ -30,15 +30,15 @@ describe('HostRulesEval tests', function() {
       const url = 'test';
       assert.isUndefined(HostRulesEval._evaluateRule(url));
       assert.isUndefined(HostRulesEval._evaluateRule(url, {}));
-      assert.isUndefined(HostRulesEval._evaluateRule(url, {from: 'from'}));
-      assert.isUndefined(HostRulesEval._evaluateRule(url, {to: 'to'}));
+      assert.isUndefined(HostRulesEval._evaluateRule(url, { from: 'from' }));
+      assert.isUndefined(HostRulesEval._evaluateRule(url, { to: 'to' }));
     });
 
     it('Returns undefined if the rule does not match', function() {
       const url = 'abc';
       const rule = {
         from: 'xyz',
-        to: 'test'
+        to: 'test',
       };
       assert.isUndefined(HostRulesEval._evaluateRule(url, rule));
     });
@@ -47,7 +47,7 @@ describe('HostRulesEval tests', function() {
       const url = 'abc';
       const rule = {
         from: 'a',
-        to: 'test'
+        to: 'test',
       };
       const result = HostRulesEval._evaluateRule(url, rule);
       assert.equal(result, 'testbc');
@@ -57,7 +57,7 @@ describe('HostRulesEval tests', function() {
       const url = 'abca';
       const rule = {
         from: 'a',
-        to: 'test'
+        to: 'test',
       };
       const result = HostRulesEval._evaluateRule(url, rule);
       assert.equal(result, 'testbctest');
@@ -67,18 +67,18 @@ describe('HostRulesEval tests', function() {
       const url = 'abca';
       const rule = {
         from: 'abc*',
-        to: 'test'
+        to: 'test',
       };
       const result = HostRulesEval._evaluateRule(url, rule);
       assert.equal(result, 'test');
     });
 
     [
-      ['https://api.domain.com/api', 'https://test.domain.com/api', {from: 'api.domain.com', to: 'test.domain.com'}],
-      ['https://api.domain.com/api', 'https://test.domain.com/api', {from: 'api.*.com', to: 'test.domain.com'}],
-      ['https://a123.domain.com/api', 'https://test.domain.com/api', {from: 'a(\\d+)', to: 'test'}],
-      ['https://a123.domain.com/api', 'https://secured/api', {from: 'https://*/', to: 'https://secured/'}],
-      ['https://var.domain.com/var', 'https://abc.domain.com/abc', {from: 'var', to: 'abc'}]
+      ['https://api.domain.com/api', 'https://test.domain.com/api', { from: 'api.domain.com', to: 'test.domain.com' }],
+      ['https://api.domain.com/api', 'https://test.domain.com/api', { from: 'api.*.com', to: 'test.domain.com' }],
+      ['https://a123.domain.com/api', 'https://test.domain.com/api', { from: 'a(\\d+)', to: 'test' }],
+      ['https://a123.domain.com/api', 'https://secured/api', { from: 'https://*/', to: 'https://secured/' }],
+      ['https://var.domain.com/var', 'https://abc.domain.com/abc', { from: 'var', to: 'abc' }],
     ].forEach((item, index) => {
       it(`Evaluates test #${index}`, function() {
         const result = HostRulesEval._evaluateRule(item[0], item[2]);
@@ -100,19 +100,19 @@ describe('HostRulesEval tests', function() {
     it('Alters the URL by all rules', () => {
       const rules = [{
         from: 'https:',
-        to: 'ftp:'
+        to: 'ftp:',
       }, {
         from: '/api\\.',
-        to: '/0.'
+        to: '/0.',
       }, {
         from: '\\.host\\.',
-        to: '.'
+        to: '.',
       }, {
         from: '/path',
-        to: '/api'
+        to: '/api',
       }, {
         from: 'query=param',
-        to: 'a=b'
+        to: 'a=b',
       }];
       const result = HostRulesEval.applyHosts(url, rules);
       assert.equal(result, 'ftp://0.domain.com/api?a=b');

@@ -1,22 +1,22 @@
 const assert = require('chai').assert;
-const {ElectronRequest} = require('../../');
+const { ElectronRequest } = require('../../');
 
 describe('Redirects test', function() {
   const requests = [{
     id: 'r-1',
     url: 'http://localhost/absolute-redirect/2',
-    method: 'GET'
+    method: 'GET',
   }, {
     id: 'r-2',
     url: 'http://localhost/relative-redirect/2',
-    method: 'GET'
+    method: 'GET',
   }, {
     id: 'r-3',
     url: 'http://localhost/relative-redirect/1',
-    method: 'GET'
+    method: 'GET',
   }];
   const opts = [{
-    followRedirects: true
+    followRedirects: true,
   }];
 
   it('Redirects with absolute URL', function(done) {

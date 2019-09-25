@@ -1,12 +1,11 @@
 const assert = require('chai').assert;
-const {SocketRequest} = require('../../');
+const { SocketRequest, ArcHeaders } = require('../../');
 const chunkedServer = require('../chunked-server');
-const {ArcHeaders} = require('../../lib/arc-headers');
 
 global.performance = {
   now: function() {
     return Date.now();
-  }
+  },
 };
 
 describe('Socket request basics', function() {
@@ -19,25 +18,25 @@ describe('Socket request basics', function() {
     url: `http://localhost:${httpPort}/api/endpoint?query=param`,
     method: 'GET',
     headers: 'Host: test.com\nContent-Length: 0',
-    payload: 'abc'
+    payload: 'abc',
   }, {
     id: 'r-2',
     url: `http://localhost:${httpPort}/api/endpoint?query=param`,
     method: 'POST',
     headers: 'content-type: text/plain',
-    payload: Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74])
+    payload: Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74]),
   }, {
     id: 'r-3',
     url: `http://localhost:${httpPort}/api/endpoint?query=param`,
     method: 'POST',
     headers: 'Host: test.com\nContent-Length: 12',
-    payload: Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74])
+    payload: Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74]),
   }, {
     id: 'r-4',
     url: `http://localhost:${httpPort}/api/endpoint?query=param`,
     method: 'GET',
     headers: 'Host: test.com',
-    payload: ''
+    payload: '',
   }, {
     id: 'r-5',
     url: `http://localhost:${httpPort}/api/endpoint?query=param`,
@@ -47,13 +46,13 @@ describe('Socket request basics', function() {
       method: 'ntlm',
       domain: 'domain.com',
       username: 'test',
-      password: 'test'
-    }
+      password: 'test',
+    },
   }, {
     id: 'r-66',
     url: 'http://localhost/get',
     method: 'GET',
-    headers: 'x-test: true'
+    headers: 'x-test: true',
   }, {
     id: 'r-7',
     url: 'http://localhost:8080/api/endpoint?query=param#access_token=test',
@@ -63,8 +62,8 @@ describe('Socket request basics', function() {
       method: 'ntlm',
       domain: 'domain.com',
       username: 'test',
-      password: 'test'
-    }
+      password: 'test',
+    },
   }];
 
   const opts = [{
@@ -72,8 +71,8 @@ describe('Socket request basics', function() {
     followRedirects: false,
     hosts: [{
       from: 'domain.com',
-      to: 'test.com'
-    }]
+      to: 'test.com',
+    }],
   }];
   before(function() {
     return chunkedServer.startServer(httpPort, sslPort);
@@ -142,24 +141,24 @@ describe('Socket request basics', function() {
       const result = request._connect(httpPort, host);
       assert.typeOf(result, 'promise');
       return result
-      .then((client) => client.destroy());
+          .then((client) => client.destroy());
     });
 
     it('Resolved promise returns HTTP server client', function() {
       return request._connect(httpPort, host)
-      .then((client) => {
-        assert.typeOf(client, 'object');
-        client.destroy();
-      });
+          .then((client) => {
+            assert.typeOf(client, 'object');
+            client.destroy();
+          });
     });
 
     it('Sets stats propty', function() {
       return request._connect(httpPort, host)
-      .then((client) => {
-        client.destroy();
-        assert.typeOf(request.stats.connectionTime, 'number', 'connectionTime stat is set');
-        assert.typeOf(request.stats.lookupTime, 'number', 'lookupTime stat is set');
-      });
+          .then((client) => {
+            client.destroy();
+            assert.typeOf(request.stats.connectionTime, 'number', 'connectionTime stat is set');
+            assert.typeOf(request.stats.lookupTime, 'number', 'lookupTime stat is set');
+          });
     });
   });
 
@@ -175,27 +174,27 @@ describe('Socket request basics', function() {
       const result = request._connectTls(sslPort, host);
       assert.typeOf(result, 'promise');
       return result
-      .then((client) => client.destroy());
+          .then((client) => client.destroy());
     });
 
     it('Resolved promise returns HTTP server client', function() {
       return request._connectTls(sslPort, host)
-      .then((client) => {
-        assert.typeOf(client, 'object');
-        client.destroy();
-      });
+          .then((client) => {
+            assert.typeOf(client, 'object');
+            client.destroy();
+          });
     });
 
     it('Sets stats propty', function() {
       return request._connectTls(sslPort, host)
-      .then((client) => {
-        client.destroy();
-        assert.typeOf(request.stats.connectionTime, 'number', 'connectionTime stat is set');
-        assert.typeOf(request.stats.lookupTime, 'number', 'lookupTime stat is set');
-        assert.typeOf(request.stats.secureStartTime, 'number', 'secureStartTime stat is set');
-        assert.typeOf(request.stats.secureConnectedTime, 'number',
-          'secureConnectedTime stat is set');
-      });
+          .then((client) => {
+            client.destroy();
+            assert.typeOf(request.stats.connectionTime, 'number', 'connectionTime stat is set');
+            assert.typeOf(request.stats.lookupTime, 'number', 'lookupTime stat is set');
+            assert.typeOf(request.stats.secureStartTime, 'number', 'secureStartTime stat is set');
+            assert.typeOf(request.stats.secureConnectedTime, 'number',
+                'secureConnectedTime stat is set');
+          });
     });
   });
 
@@ -225,18 +224,18 @@ describe('Socket request basics', function() {
 
     it('Resolved promise returns HTTP server client', function() {
       return request.connect()
-      .then((client) => {
-        assert.typeOf(client, 'object');
-        createdClient = client;
-      });
+          .then((client) => {
+            assert.typeOf(client, 'object');
+            createdClient = client;
+          });
     });
 
     it('Sets socket propery', function() {
       return request.connect()
-      .then((client) => {
-        assert.isTrue(request.socket === client);
-        createdClient = client;
-      });
+          .then((client) => {
+            assert.isTrue(request.socket === client);
+            createdClient = client;
+          });
     });
   });
 
@@ -271,14 +270,14 @@ describe('Socket request basics', function() {
       const request = new SocketRequest(requests[1], opts[0]);
       const result = request._prepareMessage().toString();
       assert.equal(result.split('\n')[0],
-        'POST /api/endpoint?query=param HTTP/1.1\r');
+          'POST /api/endpoint?query=param HTTP/1.1\r');
     });
 
     it('Removes hash from the URL', function() {
       const request = new SocketRequest(requests[6], opts[0]);
       const result = request._prepareMessage().toString();
       assert.equal(result.split('\n')[0],
-        'GET /api/endpoint?query=param HTTP/1.1\r');
+          'GET /api/endpoint?query=param HTTP/1.1\r');
     });
 
     it('Adds Host header', function() {
@@ -311,44 +310,44 @@ describe('Socket request basics', function() {
     it('Returns promise resolved to a Buffer', function() {
       const request = new SocketRequest(requests[0], opts[0]);
       return request.prepareMessage()
-      .then((result) => assert.isTrue(result instanceof Buffer));
+          .then((result) => assert.isTrue(result instanceof Buffer));
     });
 
     it('Ignores payload for GET requests', function() {
       const request = new SocketRequest(requests[0], opts[0]);
       return request.prepareMessage()
-      .then((result) => {
-        assert.lengthOf(result.toString().split('\n'), 5);
-      });
+          .then((result) => {
+            assert.lengthOf(result.toString().split('\n'), 5);
+          });
     });
 
     it('Creates message with payload', function() {
       const request = new SocketRequest(requests[1], opts[0]);
       return request.prepareMessage()
-      .then((result) => {
-        assert.lengthOf(result.toString().split('\n'), 7);
-      });
+          .then((result) => {
+            assert.lengthOf(result.toString().split('\n'), 7);
+          });
     });
 
     it('Adds NTLM request headers from payload processing', () => {
       const request = new SocketRequest(requests[4], opts[0]);
       return request.prepareMessage()
-      .then((result) => {
-        assert.equal(request.arcRequest.headers.indexOf('NTLM '), -1,
-          'Headers are not altered');
-        assert.isAbove(result.toString().indexOf('NTLM '), 0,
-        'Adds headers to body');
-      });
+          .then((result) => {
+            assert.equal(request.arcRequest.headers.indexOf('NTLM '), -1,
+                'Headers are not altered');
+            assert.isAbove(result.toString().indexOf('NTLM '), 0,
+                'Adds headers to body');
+          });
     });
 
     it('Adds content length header', () => {
       const request = new SocketRequest(requests[1], opts[0]);
       return request.prepareMessage()
-      .then((result) => {
-        const search = request.arcRequest.headers.indexOf('content-length: 9');
-        assert.isAbove(search, 0);
-        assert.isAbove(result.toString().indexOf('content-length: 9'), 0);
-      });
+          .then((result) => {
+            const search = request.arcRequest.headers.indexOf('content-length: 9');
+            assert.isAbove(search, 0);
+            assert.isAbove(result.toString().indexOf('content-length: 9'), 0);
+          });
     });
   });
 
@@ -369,9 +368,9 @@ describe('Socket request basics', function() {
     beforeEach(function() {
       request = new SocketRequest(requests[0], opts[0]);
       return request.connect()
-      .then((client) => {
-        createdClient = client;
-      });
+          .then((client) => {
+            createdClient = client;
+          });
     });
 
     afterEach(function() {
@@ -383,31 +382,31 @@ describe('Socket request basics', function() {
     });
 
     it('Returns promise', function() {
-      let result = request.writeMessage(message);
+      const result = request.writeMessage(message);
       assert.typeOf(result, 'promise', 'Returns a promise object');
       return result.then((data) => assert.isUndefined(data,
-        'Promise resolves nothing'));
+          'Promise resolves nothing'));
     });
 
     it('Sets messageSent property on arcRequest', function() {
       return request.writeMessage(message)
-      .then(() => {
-        assert.typeOf(request.arcRequest.sentHttpMessage, 'string');
-      });
+          .then(() => {
+            assert.typeOf(request.arcRequest.sentHttpMessage, 'string');
+          });
     });
 
     it('Sets messageStart property on stats object', function() {
       return request.writeMessage(message)
-      .then(() => {
-        assert.typeOf(request.stats.messageStart, 'number');
-      });
+          .then(() => {
+            assert.typeOf(request.stats.messageStart, 'number');
+          });
     });
 
     it('Sets sentTime property on stats object', function() {
       return request.writeMessage(message)
-      .then(() => {
-        assert.typeOf(request.stats.sentTime, 'number');
-      });
+          .then(() => {
+            assert.typeOf(request.stats.sentTime, 'number');
+          });
     });
 
     it('Emits loadstart event', function(done) {
@@ -440,7 +439,7 @@ describe('Socket request basics', function() {
 
     it('Headers contains 3 headers', function() {
       request._parseHeaders(headersBuf);
-      let list = {};
+      const list = {};
       request._response._headers.forEach((value, name) => {
         list[name] = value;
       });

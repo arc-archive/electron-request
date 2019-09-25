@@ -1,5 +1,5 @@
 const assert = require('chai').assert;
-const {ArcHeaders} = require('../../lib/arc-headers');
+const { ArcHeaders } = require('../../');
 
 describe('ArcHeaders tests', function() {
   [
@@ -7,10 +7,10 @@ describe('ArcHeaders tests', function() {
     ['Map', {
       'x-a': 'a',
       'x-b': 'b',
-      'c': 'c'
+      'c': 'c',
     }, 3, ['x-a', 'x-b', 'c'], ['a', 'b', 'c']],
     ['Array', [['x-a', 'a'], ['x-b', 'b'], ['c', 'c']], 3, ['x-a', 'x-b', 'c'], ['a', 'b', 'c']],
-    ['undefined', undefined, 0, [], []]
+    ['undefined', undefined, 0, [], []],
   ].forEach((item) => {
     describe(`${item[0]} input`, function() {
       it(`Parses ${item[0]} as an input`, () => {
@@ -177,7 +177,7 @@ describe('ArcHeaders tests', function() {
     it('Can iterate pover the keys', function() {
       const instance = new ArcHeaders(input);
       const allowed = ['My_Test', 'AbCd'];
-      for (let key of instance.keys()) {
+      for (const key of instance.keys()) {
         assert.notEqual(allowed.indexOf(key), -1);
       }
     });
@@ -196,7 +196,7 @@ describe('ArcHeaders tests', function() {
     it('Can iterate pover the values', function() {
       const instance = new ArcHeaders(input);
       const allowed = ['header', 'Test'];
-      for (let key of instance.values()) {
+      for (const key of instance.values()) {
         assert.notEqual(allowed.indexOf(key), -1);
       }
     });
@@ -216,7 +216,7 @@ describe('ArcHeaders tests', function() {
       const instance = new ArcHeaders(input);
       const allowedKeys = ['My_Test', 'AbCd'];
       const allowedValues = ['header', 'Test'];
-      for (let [key, value] of instance.entries()) {
+      for (const [key, value] of instance.entries()) {
         assert.notEqual(allowedKeys.indexOf(key), -1);
         assert.notEqual(allowedValues.indexOf(value), -1);
       }
@@ -230,7 +230,7 @@ describe('ArcHeaders tests', function() {
       const instance = new ArcHeaders(input);
       const allowedKeys = ['My_Test', 'AbCd'];
       const allowedValues = ['header', 'Test'];
-      for (let [key, value] of instance) {
+      for (const [key, value] of instance) {
         assert.notEqual(allowedKeys.indexOf(key), -1);
         assert.notEqual(allowedValues.indexOf(value), -1);
       }

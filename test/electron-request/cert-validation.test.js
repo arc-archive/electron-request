@@ -1,17 +1,17 @@
 const assert = require('chai').assert;
-const {ElectronRequest} = require('../../');
+const { ElectronRequest } = require('../../');
 
 describe('Responses test', function() {
   this.timeout(5000);
   const requests = [{
     id: 'r-1',
     url: 'http://localhost/image',
-    method: 'GET'
+    method: 'GET',
   }];
   const opts = [{
-    validateCertificates: false
+    validateCertificates: false,
   }, {
-    validateCertificates: true
+    validateCertificates: true,
   }];
 
   [
@@ -22,12 +22,12 @@ describe('Responses test', function() {
     // ['revoked', 'https://revoked.badssl.com/'],
     // ['pinned', 'https://pinning-test.badssl.com/']
   ].forEach((item, index) => {
-    let [name, url] = item;
+    const [name, url] = item;
     it('Reads certificate: ' + name, (done) => {
       const request = new ElectronRequest({
         id: 'r-' + index,
         url,
-        method: 'GET'
+        method: 'GET',
       }, opts[0]);
       request.once('load', () => done());
       request.once('error', (err) => done(err));
@@ -38,7 +38,7 @@ describe('Responses test', function() {
       const request = new ElectronRequest({
         id: 'r-' + index,
         url,
-        method: 'GET'
+        method: 'GET',
       }, opts[1]);
       request.once('load', () => {
         done(new Error('Should not load'));

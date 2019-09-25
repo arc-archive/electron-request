@@ -1,3 +1,2 @@
-exports.SocketRequest = require('./lib/socket-request').SocketRequest;
-exports.ElectronRequest = require('./lib/electron-request').ElectronRequest;
-exports.RequestOptions = require('./lib/request-options').RequestOptions;
+require = require('esm')(module);
+module.exports = require('./main.js');

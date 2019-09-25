@@ -1,11 +1,11 @@
 const assert = require('chai').assert;
-const {SocketRequest} = require('../../');
+const { SocketRequest } = require('../../');
 const chunkedServer = require('../chunked-server');
 
 global.performance = {
   now: function() {
     return Date.now();
-  }
+  },
 };
 
 describe('Socket request - receiving data', function() {
@@ -17,12 +17,12 @@ describe('Socket request - receiving data', function() {
     method: 'GET',
     headers: 'Host: test.com\nContent-Length: 0',
     payload: 'abc',
-    id: 'test1'
+    id: 'test1',
   }];
 
   const opts = [{
     timeout: 10000,
-    followRedirects: true
+    followRedirects: true,
   }];
 
   before(function() {
@@ -41,7 +41,7 @@ describe('Socket request - receiving data', function() {
     it('Receives chunked response.', function(done) {
       request = new SocketRequest(requests[0], opts[0]);
       request.once('load', function(id, response) {
-        let parts = response.payload.toString().split('\n');
+        const parts = response.payload.toString().split('\n');
         assert.lengthOf(parts, 6);
         for (let i = 0; i < 5; i++) {
           assert.equal(parts[i].length, 128);
@@ -151,26 +151,26 @@ describe('Socket request - receiving data', function() {
     });
 
     it('Does not call _reportResponse when length is higher than data',
-      function() {
-      request._contentLength = testLength + 1;
-      let called = false;
-      request._reportResponse = function() {
-        called = true;
-      };
-      request._processBody(testData);
-      assert.isFalse(called);
-    });
+        function() {
+          request._contentLength = testLength + 1;
+          let called = false;
+          request._reportResponse = function() {
+            called = true;
+          };
+          request._processBody(testData);
+          assert.isFalse(called);
+        });
 
     it('Reports response when the data is read as whole on one socket buffer',
-      function() {
-      request._contentLength = testLength;
-      let called = false;
-      request._reportResponse = function() {
-        called = true;
-      };
-      request._processBody(testData);
-      assert.isTrue(called, '_reportResponse was called');
-    });
+        function() {
+          request._contentLength = testLength;
+          let called = false;
+          request._reportResponse = function() {
+            called = true;
+          };
+          request._processBody(testData);
+          assert.isTrue(called, '_reportResponse was called');
+        });
 
     it('Reports response after more calls', function() {
       request._contentLength = testLength;

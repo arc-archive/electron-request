@@ -1,5 +1,5 @@
 const assert = require('chai').assert;
-const {ElectronRequest} = require('../../');
+const { ElectronRequest } = require('../../');
 
 describe('Responses test', function() {
   [
@@ -17,13 +17,13 @@ describe('Responses test', function() {
     ['json (2)', 'http://localhost/json'],
     ['xml', 'http://localhost/xml'],
   ].forEach((item, index) => {
-    let [name, url] = item;
+    const [name, url] = item;
     it('Reads the response: ' + name, (done) => {
       const id = 'r-' + index;
       const request = new ElectronRequest({
         id,
         url,
-        method: 'GET'
+        method: 'GET',
       });
       request.once('load', (rid, response) => {
         assert.equal(rid, id);
@@ -42,7 +42,7 @@ describe('Stats tests', function() {
     const request = new ElectronRequest({
       id: 'test',
       url: 'http://localhost/get',
-      method: 'GET'
+      method: 'GET',
     });
     request.once('load', (id, response) => {
       assert.typeOf(response.stats, 'object');
@@ -53,27 +53,27 @@ describe('Stats tests', function() {
   });
 
   ['connect', 'receive', 'send', 'wait', 'dns', 'ssl']
-  .forEach((prop) => {
-    it(`Has ${prop} value`, (done) => {
-      const request = new ElectronRequest({
-        id: 'test',
-        url: 'http://localhost/get',
-        method: 'GET'
+      .forEach((prop) => {
+        it(`Has ${prop} value`, (done) => {
+          const request = new ElectronRequest({
+            id: 'test',
+            url: 'http://localhost/get',
+            method: 'GET',
+          });
+          request.once('load', (id, response) => {
+            assert.typeOf(response.stats[prop], 'number');
+            done();
+          });
+          request.once('error', (err) => done(err));
+          request.send();
+        });
       });
-      request.once('load', (id, response) => {
-        assert.typeOf(response.stats[prop], 'number');
-        done();
-      });
-      request.once('error', (err) => done(err));
-      request.send();
-    });
-  });
 
   it('Has stats time for ssl', (done) => {
     const request = new ElectronRequest({
       id: 'test',
       url: 'https://www.google.com',
-      method: 'GET'
+      method: 'GET',
     });
     request.once('load', (id, response) => {
       assert.isAbove(response.stats.ssl, -1);

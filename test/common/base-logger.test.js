@@ -1,11 +1,11 @@
 const assert = require('chai').assert;
-const {BaseRequest} = require('../../lib/base-request');
+const { BaseRequest } = require('../../');
 
 describe('BaseRequest - logger', function() {
   const requestData = {
     method: 'GET',
     url: 'https://domain.com',
-    id: 'test-id'
+    id: 'test-id',
   };
 
   it('Sets default logger', () => {
@@ -21,7 +21,7 @@ describe('BaseRequest - logger', function() {
   it('Sets passed logger option', () => {
     const base = new BaseRequest(requestData);
     const result = base.__setupLogger({
-      logger: console
+      logger: console,
     });
     assert.isTrue(result === console);
   });

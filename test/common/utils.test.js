@@ -1,6 +1,6 @@
 const assert = require('chai').assert;
-const {RequestUtils} = require('../../lib/utils');
-const {ArcHeaders} = require('../../lib/arc-headers');
+const { RequestUtils } = require('../../');
+const { ArcHeaders } = require('../../');
 
 describe('RequestUtils tests', function() {
   const requests = [{
@@ -8,7 +8,7 @@ describe('RequestUtils tests', function() {
     url: `http://localhost:1234/api/endpoint?query=param`,
     method: 'POST',
     headers: 'content-type: text/plain',
-    payload: Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74])
+    payload: Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74]),
   }, {
     id: 'r-3',
     url: `http://localhost:1234/api/endpoint?query=param`,
@@ -131,14 +131,14 @@ describe('RequestUtils tests', function() {
 
     it('Returns false when url is not on the list', () => {
       const result = RequestUtils.isRedirectLoop(url, new Set([{
-        url: 'other.com'
+        url: 'other.com',
       }]));
       assert.isFalse(result);
     });
 
     it('Returns true when url is on the list', () => {
       const result = RequestUtils.isRedirectLoop(url, new Set([{
-        url
+        url,
       }]));
       assert.isTrue(result);
     });

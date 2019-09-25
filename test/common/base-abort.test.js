@@ -1,20 +1,20 @@
 const assert = require('chai').assert;
 const net = require('net');
-const {BaseRequest} = require('../../lib/base-request');
+const { BaseRequest } = require('../../');
 
 describe('BaseRequest - abort', function() {
   const requestData = {
     method: 'GET',
-    url: 'https://domain.com',
-    id: 'test-id'
+    url: 'https://httpbin.com',
+    id: 'test-id',
   };
 
   function setupSocket(base) {
     return new Promise((resolve, reject) => {
       const socket = new net.Socket({
-        writable: true
+        writable: true,
       });
-      socket.connect(80, 'localhost', () => {
+      socket.connect(80, 'httpbin.com', () => {
         base.socket = socket;
         resolve();
       });
@@ -33,38 +33,38 @@ describe('BaseRequest - abort', function() {
   it('Destroys the socket', () => {
     const base = new BaseRequest(requestData);
     return setupSocket(base)
-    .then(() => {
-      base.abort();
-      assert.isUndefined(base.socket);
-    });
+        .then(() => {
+          base.abort();
+          assert.isUndefined(base.socket);
+        });
   });
 
   it('Removes destroyed socket', () => {
     const base = new BaseRequest(requestData);
     return setupSocket(base)
-    .then(() => {
-      base.socket.pause();
-      base.socket.destroy();
-      base.abort();
-      assert.isUndefined(base.socket);
-    });
+        .then(() => {
+          base.socket.pause();
+          base.socket.destroy();
+          base.abort();
+          assert.isUndefined(base.socket);
+        });
   });
 
   it('_decompress() results to undefined', () => {
     const request = new BaseRequest(requestData);
     request.abort();
     return request._decompress(Buffer.from('test'))
-    .then((result) => {
-      assert.isUndefined(result);
-    });
+        .then((result) => {
+          assert.isUndefined(result);
+        });
   });
 
   it('_createResponse() results to undefined', () => {
     const request = new BaseRequest(requestData);
     request.abort();
     return request._createResponse()
-    .then((result) => {
-      assert.isUndefined(result);
-    });
+        .then((result) => {
+          assert.isUndefined(result);
+        });
   });
 });

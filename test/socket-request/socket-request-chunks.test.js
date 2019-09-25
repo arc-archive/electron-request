@@ -1,10 +1,10 @@
 const assert = require('chai').assert;
-const {SocketRequest} = require('../../');
+const { SocketRequest } = require('../../');
 
 global.performance = {
   now: function() {
     return Date.now();
-  }
+  },
 };
 
 describe('Data buffer responses', function() {
@@ -13,7 +13,7 @@ describe('Data buffer responses', function() {
     method: 'GET',
     headers: 'Host: test.com\nContent-Length: 0',
     payload: 'abc',
-    id: 'test1'
+    id: 'test1',
   }];
 
   const opts = [{
@@ -21,8 +21,8 @@ describe('Data buffer responses', function() {
     followRedirects: false,
     hosts: [{
       from: 'domain.com',
-      to: 'test.com'
-    }]
+      to: 'test.com',
+    }],
   }];
 
   describe('Issue #75', function() {
@@ -50,13 +50,13 @@ describe('Data buffer responses', function() {
       Buffer.from([67, 111, 110, 116, 101, 110, 116, 45, 84, 121, 112, 101, 58,
         32, 97, 112, 112, 108, 105, 99, 97, 116, 105, 111, 110, 47, 106, 115,
         111, 110, 13, 10, 67, 111, 110, 116, 101, 110, 116, 45, 76, 101, 110,
-        103, 116, 104, 58, 32, 49, 49, 52, 13, 10])
+        103, 116, 104, 58, 32, 49, 49, 52, 13, 10]),
     ];
     const headersMap = {
       'Content-Type': 'application/json',
       'Content-Length': '114',
       'Server': 'Werkzeug/0.14.1 Python/2.7.14',
-      'Date': 'Thu, 21 Jun 2018 18:30:51 GMT'
+      'Date': 'Thu, 21 Jun 2018 18:30:51 GMT',
     };
     let request;
     beforeEach(function() {

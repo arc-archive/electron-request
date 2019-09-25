@@ -1,4 +1,4 @@
-const {RequestOptions} = require('../../lib/request-options');
+const { RequestOptions } = require('../../');
 const assert = require('chai').assert;
 
 describe('RequestOptions', function() {
@@ -11,8 +11,8 @@ describe('RequestOptions', function() {
           followRedirects: false,
           timeout: 20,
           logger: console,
-          hosts: [{from: 'a', to: 'b'}],
-          sentMessageLimit: 12
+          hosts: [{ from: 'a', to: 'b' }],
+          sentMessageLimit: 12,
         });
         assert.lengthOf(options.validationWarnings, 0);
       });
@@ -20,7 +20,7 @@ describe('RequestOptions', function() {
       it('Sets warning for type missmatch', function() {
         const options = new RequestOptions();
         options._validateOptionsList({
-          validateCertificates: 'false'
+          validateCertificates: 'false',
         });
         assert.lengthOf(options.validationWarnings, 1);
       });
@@ -28,7 +28,7 @@ describe('RequestOptions', function() {
       it('Ignores "undefined" missmatch', function() {
         const options = new RequestOptions();
         options._validateOptionsList({
-          sentMessageLimit: undefined
+          sentMessageLimit: undefined,
         });
         assert.lengthOf(options.validationWarnings, 0);
       });
@@ -36,7 +36,7 @@ describe('RequestOptions', function() {
       it('Sets default value for type missmatch', function() {
         const options = new RequestOptions();
         options._validateOptionsList({
-          validateCertificates: 'false'
+          validateCertificates: 'false',
         });
         assert.isFalse(options.validateCertificates);
       });
@@ -44,7 +44,7 @@ describe('RequestOptions', function() {
       it('Sets warning for unknown property', function() {
         const options = new RequestOptions();
         options._validateOptionsList({
-          unknown: 1
+          unknown: 1,
         });
         assert.lengthOf(options.validationWarnings, 1);
       });
@@ -52,7 +52,7 @@ describe('RequestOptions', function() {
       it('Removes unknown property', function() {
         const options = new RequestOptions();
         options._validateOptionsList({
-          unknown: 1
+          unknown: 1,
         });
         assert.isUndefined(options.options);
       });
@@ -61,7 +61,7 @@ describe('RequestOptions', function() {
     describe('_validateLogger()', () => {
       it('Should set warning for invalid object', function() {
         const options = new RequestOptions({
-          logger: {}
+          logger: {},
         });
         assert.lengthOf(options.validationWarnings, 1);
       });
@@ -71,8 +71,8 @@ describe('RequestOptions', function() {
           logger: {
             log: function() {},
             warning: function() {},
-            error: function() {}
-          }
+            error: function() {},
+          },
         });
         assert.lengthOf(options.validationWarnings, 1);
       });
@@ -82,8 +82,8 @@ describe('RequestOptions', function() {
           logger: {
             info: function() {},
             warning: function() {},
-            error: function() {}
-          }
+            error: function() {},
+          },
         });
         assert.lengthOf(options.validationWarnings, 1);
       });
@@ -93,8 +93,8 @@ describe('RequestOptions', function() {
           logger: {
             info: function() {},
             log: function() {},
-            error: function() {}
-          }
+            error: function() {},
+          },
         });
         assert.lengthOf(options.validationWarnings, 1);
       });
@@ -104,8 +104,8 @@ describe('RequestOptions', function() {
           logger: {
             info: function() {},
             log: function() {},
-            warning: function() {}
-          }
+            warning: function() {},
+          },
         });
         assert.lengthOf(options.validationWarnings, 1);
       });
@@ -116,8 +116,8 @@ describe('RequestOptions', function() {
             info: function() {},
             log: function() {},
             warn: function() {},
-            error: function() {}
-          }
+            error: function() {},
+          },
         });
         assert.lengthOf(options.validationWarnings, 0);
       });
@@ -127,21 +127,21 @@ describe('RequestOptions', function() {
   describe('_validateMessageLimit()', () => {
     it('Adds warning for negative messsage limit', () => {
       const options = new RequestOptions({
-        sentMessageLimit: -1
+        sentMessageLimit: -1,
       });
       assert.lengthOf(options.validationWarnings, 1);
     });
 
     it('Sets default message limit', () => {
       const options = new RequestOptions({
-        sentMessageLimit: -1
+        sentMessageLimit: -1,
       });
       assert.equal(options.sentMessageLimit, 2048);
     });
 
     it('Respects 0 value', () => {
       const options = new RequestOptions({
-        sentMessageLimit: 0
+        sentMessageLimit: 0,
       });
       assert.equal(options.sentMessageLimit, 0);
     });

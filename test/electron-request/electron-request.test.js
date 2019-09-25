@@ -1,6 +1,6 @@
 const assert = require('chai').assert;
 const url = require('url');
-const {ElectronRequest} = require('../../');
+const { ElectronRequest } = require('../../');
 
 describe('Electron request basics', function() {
   this.timeout(10000);
@@ -9,25 +9,25 @@ describe('Electron request basics', function() {
     url: 'http://localhost/get',
     method: 'GET',
     headers: 'Host: test.com\nContent-Length: 0',
-    payload: 'abc'
+    payload: 'abc',
   }, {
     id: 'r-2',
     url: 'http://localhost/post',
     method: 'POST',
     headers: 'content-type: text/plain',
-    payload: Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74])
+    payload: Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74]),
   }, {
     id: 'r-3',
     url: 'https://google.com',
     method: 'GET',
     headers: 'Host: localhost\nContent-Length: 0',
-    payload: 'abc'
+    payload: 'abc',
   }, {
     id: 'r-4',
     url: 'https://api.com:5123/path?qp1=v1&qp2=v2#test',
     method: 'POST',
     headers: 'Host: localhost\nContent-Length: 3\nx-test: true',
-    payload: 'abc'
+    payload: 'abc',
   }];
 
   const opts = [{
@@ -35,8 +35,8 @@ describe('Electron request basics', function() {
     followRedirects: false,
     hosts: [{
       from: 'domain.com',
-      to: 'test.com'
-    }]
+      to: 'test.com',
+    }],
   }];
 
   describe('_connect()', function() {
@@ -127,24 +127,24 @@ describe('Electron request basics', function() {
     it('Returns promise resolved to a Buffer', function() {
       const request = new ElectronRequest(requests[1], opts[0]);
       return request._prepareMessage()
-      .then((result) => assert.isTrue(result instanceof Uint8Array));
+          .then((result) => assert.isTrue(result instanceof Uint8Array));
     });
 
     it('Ignores payload for GET requests', function() {
       const request = new ElectronRequest(requests[0], opts[0]);
       return request._prepareMessage()
-      .then((result) => {
-        assert.isUndefined(result);
-      });
+          .then((result) => {
+            assert.isUndefined(result);
+          });
     });
 
     it('Adds content length header', () => {
       const request = new ElectronRequest(requests[1], opts[0]);
       return request._prepareMessage()
-      .then(() => {
-        const search = request.arcRequest.headers.indexOf('content-length: 9');
-        assert.isAbove(search, 0);
-      });
+          .then(() => {
+            const search = request.arcRequest.headers.indexOf('content-length: 9');
+            assert.isAbove(search, 0);
+          });
     });
   });
 

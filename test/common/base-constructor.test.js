@@ -1,12 +1,12 @@
 const assert = require('chai').assert;
-const {BaseRequest} = require('../../lib/base-request');
-const {RequestOptions} = require('../../lib/request-options');
+const { BaseRequest } = require('../../');
+const { RequestOptions } = require('../../');
 
 describe('BaseRequest constructor', function() {
   const requestData = {
     method: 'GET',
     url: 'https://domain.com',
-    id: 'test-id'
+    id: 'test-id',
   };
 
   it('Sets options', () => {
@@ -47,9 +47,9 @@ describe('BaseRequest constructor', function() {
   });
 
   it('Sets hosts', () => {
-    const hosts = [{from: 'a', to: 'b'}];
+    const hosts = [{ from: 'a', to: 'b' }];
     const request = new BaseRequest(requestData, {
-      hosts
+      hosts,
     });
     assert.deepEqual(request.hosts, hosts);
   });

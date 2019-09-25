@@ -8,19 +8,19 @@ const chance = new Chance();
 
 const srvs = {
   srv: undefined,
-  ssl: undefined
+  ssl: undefined,
 };
 
 require('ssl-root-cas')
-.inject()
-.addFile(path.join('test', 'certs', 'ca.cert.pem'));
+    .inject()
+    .addFile(path.join('test', 'certs', 'ca.cert.pem'));
 /**
  * Writes a chaunk of data to the response.
  *
  * @param {Object} res Node's response object
  */
 function writeChunk(res) {
-  res.write(chance.word({length: 128}) + '\n');
+  res.write(chance.word({ length: 128 }) + '\n');
 }
 /**
  * Writes chunk type response to the client.
@@ -30,12 +30,12 @@ function writeChunk(res) {
 function writeChunkedResponse(res) {
   res.writeHead(200, {
     'Content-Type': 'text/plain; charset=UTF-8',
-    'Transfer-Encoding': 'chunked'
+    'Transfer-Encoding': 'chunked',
   });
   writeChunk(res);
   let time = 0;
   for (let i = 0; i < 4; i++) {
-    let timeout = chance.integer({min: 1, max: 10});
+    const timeout = chance.integer({ min: 1, max: 10 });
     time += timeout;
     setTimeout(writeChunk.bind(this, res), timeout);
   }
@@ -64,7 +64,7 @@ function connectedSslCallback(req, res) {
 }
 
 let lastSocketKey = 0;
-let socketMap = {};
+const socketMap = {};
 function handleConnection(socket) {
   const socketKey = ++lastSocketKey;
   socketMap[socketKey] = socket;
@@ -85,7 +85,7 @@ function startHttpsServer(sslPort) {
   return new Promise((resolve) => {
     const options = {
       key: fs.readFileSync(path.join('test', 'certs', 'privkey.pem')),
-      cert: fs.readFileSync(path.join('test', 'certs', 'fullchain.pem'))
+      cert: fs.readFileSync(path.join('test', 'certs', 'fullchain.pem')),
     };
     srvs.ssl = https.createServer(options, connectedSslCallback);
     srvs.ssl.listen(sslPort, () => resolve());
@@ -96,7 +96,7 @@ function startHttpsServer(sslPort) {
 exports.startServer = function(httpPort, sslPort) {
   return Promise.all([
     startHttpServer(httpPort),
-    startHttpsServer(sslPort)
+    startHttpsServer(sslPort),
   ]);
 };
 

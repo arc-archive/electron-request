@@ -1,11 +1,11 @@
 const assert = require('chai').assert;
-const {BaseRequest} = require('../../lib/base-request');
+const { BaseRequest } = require('../../');
 
 describe('BaseRequest uri', function() {
   const requestData = {
     method: 'GET',
     url: 'https://domain.com',
-    id: 'test-id'
+    id: 'test-id',
   };
 
   it('Uri is parsed URL', () => {
@@ -22,9 +22,9 @@ describe('BaseRequest uri', function() {
   });
 
   it('Applies host rules', () => {
-    const hosts = [{from: 'domain.com', to: 'other.com'}];
+    const hosts = [{ from: 'domain.com', to: 'other.com' }];
     const request = new BaseRequest(requestData, {
-      hosts
+      hosts,
     });
     assert.equal(request.uri.hostname, 'other.com');
   });

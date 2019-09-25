@@ -1,22 +1,22 @@
 const assert = require('chai').assert;
-const {ElectronRequest} = require('../../');
+const { ElectronRequest } = require('../../');
 
 describe('Timeout test', function() {
   const requests = [{
     id: 'r-1',
     url: 'http://localhost/delay/1',
-    method: 'GET'
+    method: 'GET',
   }, {
     id: 'r-2',
     url: 'http://localhost/delay/1',
     method: 'GET',
     config: {
-      timeout: 500
-    }
+      timeout: 500,
+    },
   }];
   const opts = [{
     timeout: 500,
-    followRedirects: false
+    followRedirects: false,
   }];
 
   it('Timeouts the request from class options', function(done) {
