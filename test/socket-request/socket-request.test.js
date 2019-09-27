@@ -349,6 +349,15 @@ describe('Socket request basics', function() {
             assert.isAbove(result.toString().indexOf('content-length: 9'), 0);
           });
     });
+
+    it('Adds default headers', async () => {
+      const request = new SocketRequest(requests[1], {
+        defaultHeaders: true
+      });
+      await request.prepareMessage();
+      assert.include(request.arcRequest.headers, 'user-agent: advanced-rest-client', 'user-agent is set');
+      assert.include(request.arcRequest.headers, 'accept: */*', 'accept is set');
+    });
   });
 
   describe('writeMessage()', function() {

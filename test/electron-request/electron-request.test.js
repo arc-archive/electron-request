@@ -146,6 +146,15 @@ describe('Electron request basics', function() {
             assert.isAbove(search, 0);
           });
     });
+
+    it('Adds default headers', async () => {
+      const request = new ElectronRequest(requests[1], {
+        defaultHeaders: true
+      });
+      await request._prepareMessage();
+      assert.include(request.arcRequest.headers, 'user-agent: advanced-rest-client', 'user-agent is set');
+      assert.include(request.arcRequest.headers, 'accept: */*', 'accept is set');
+    });
   });
 
   describe('_createGenericOptions()', () => {

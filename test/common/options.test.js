@@ -13,6 +13,9 @@ describe('RequestOptions', function() {
           logger: console,
           hosts: [{ from: 'a', to: 'b' }],
           sentMessageLimit: 12,
+          nativeTransport: true,
+          defaulAccept: 'application/json',
+          defaultUserAgent: 'my-agent'
         });
         assert.lengthOf(options.validationWarnings, 0);
       });
@@ -164,6 +167,14 @@ describe('RequestOptions', function() {
 
     it('sentMessageLimit is set', function() {
       assert.equal(options.sentMessageLimit, 2048);
+    });
+
+    it('defaulAccept is set', function() {
+      assert.equal(options.defaulAccept, '*/*');
+    });
+
+    it('defaultUserAgent is set', function() {
+      assert.equal(options.defaultUserAgent, 'advanced-rest-client');
     });
   });
 });
