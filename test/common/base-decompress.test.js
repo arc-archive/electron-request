@@ -1,6 +1,5 @@
 const assert = require('chai').assert;
 const zlib = require('zlib');
-const compressSync = require('iltorb').compressSync;
 const { BaseRequest } = require('../../');
 const { ArcHeaders } = require('../../');
 
@@ -14,7 +13,7 @@ describe('Decompression', function() {
   }
 
   function createBrotli(str) {
-    return compressSync(Buffer.from(str || 'brotli-string'));
+    return zlib.brotliCompressSync(Buffer.from(str || 'brotli-string'));
   }
 
   const requestData = {
