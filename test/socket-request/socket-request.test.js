@@ -1,6 +1,7 @@
 const assert = require('chai').assert;
 const { SocketRequest, ArcHeaders } = require('../../');
 const chunkedServer = require('../chunked-server');
+const { logger } = require('../dummy-logger.js');
 
 global.performance = {
   now: function() {
@@ -9,7 +10,6 @@ global.performance = {
 };
 
 describe('Socket request basics', function() {
-  this.timeout(10000);
   const httpPort = 8123;
   const sslPort = 8124;
 
@@ -64,6 +64,11 @@ describe('Socket request basics', function() {
       username: 'test',
       password: 'test',
     },
+  }, {
+    id: 'r-8',
+    url: 'http://localhost/get?a=b&c=d',
+    method: 'GET',
+    headers: 'x-test: true\naccept: application/json',
   }];
 
   const opts = [{
@@ -73,6 +78,7 @@ describe('Socket request basics', function() {
       from: 'domain.com',
       to: 'test.com',
     }],
+    logger,
   }];
   before(function() {
     return chunkedServer.startServer(httpPort, sslPort);
@@ -352,7 +358,7 @@ describe('Socket request basics', function() {
 
     it('Adds default headers', async () => {
       const request = new SocketRequest(requests[1], {
-        defaultHeaders: true
+        defaultHeaders: true,
       });
       await request.prepareMessage();
       assert.include(request.arcRequest.headers, 'user-agent: advanced-rest-client', 'user-agent is set');
@@ -364,8 +370,6 @@ describe('Socket request basics', function() {
     let message;
     let request;
     let createdClient;
-
-    this.timeout(20000);
 
     before(function() {
       let str = 'GET /api/endpoint?query=param HTTP/1.1\r\n';
@@ -521,7 +525,7 @@ describe('Socket request basics', function() {
       request.once('error', function(error) {
         done(error);
       });
-      request.send();
+      request.send().catch((e) => done(e));
     });
 
     it('Dispatches "firstbyte" event', function(done) {
@@ -538,7 +542,7 @@ describe('Socket request basics', function() {
       request.once('error', function(error) {
         done(error);
       });
-      request.send();
+      request.send().catch((e) => done(e));
     });
 
     it('Dispatches "loadend" event', function(done) {
@@ -555,7 +559,7 @@ describe('Socket request basics', function() {
       request.once('error', function(error) {
         done(error);
       });
-      request.send();
+      request.send().catch((e) => done(e));
     });
 
     it('Dispatches "headersreceived" event', function(done) {
@@ -572,7 +576,33 @@ describe('Socket request basics', function() {
       request.once('error', function(error) {
         done(error);
       });
-      request.send();
+      request.send().catch((e) => done(e));
+    });
+  });
+
+  describe('Sending request parameters', () => {
+    it('Sends query paramerters to the server', () => {
+      const request = new SocketRequest(requests[7], opts[0]);
+      request.once('load', (id, response) => {
+        const payloadString = response.payload.toString();
+        const payload = JSON.parse(payloadString);
+        assert.deepEqual(payload.args, { a: 'b', c: 'd' });
+        done();
+      });
+      request.once('error', (error) => done(error));
+      request.send().catch((e) => done(e));
+    });
+
+    it('Sends headers to the server', () => {
+      const request = new SocketRequest(requests[7], opts[0]);
+      request.once('load', (id, response) => {
+        const payloadString = response.payload.toString();
+        const payload = JSON.parse(payloadString);
+        assert.deepEqual(payload.headers, { 'Host': 'localhost', 'X-Test': 'true' });
+        done();
+      });
+      request.once('error', (error) => done(error));
+      request.send().catch((e) => done(e));
     });
   });
 });

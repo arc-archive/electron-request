@@ -4,7 +4,7 @@
   "description": "ARC socket request for electron",
   "main": "index.js",
   "scripts": {
-    "test": "electron-mocha --renderer test/**/*.test.js",
+    "test": "electron-mocha --timeout 20000 --renderer test/**/*.test.js",
     "test-receiving": "electron-mocha --renderer test/socket-request-receiving.renderer.test.js",
     "test-basic": "electron-mocha --renderer test/socket-request.renderer.test.js",
     "test-test": "electron-mocha --renderer test/utils.renderer.test.js"

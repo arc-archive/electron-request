@@ -15,7 +15,12 @@ describe('RequestOptions', function() {
           sentMessageLimit: 12,
           nativeTransport: true,
           defaulAccept: 'application/json',
-          defaultUserAgent: 'my-agent'
+          defaultUserAgent: 'my-agent',
+          clientCertificate: {
+            cert: [{ data: 'test' }],
+            key: [{ data: 'test' }],
+            type: 'pem',
+          },
         });
         assert.lengthOf(options.validationWarnings, 0);
       });
@@ -147,6 +152,49 @@ describe('RequestOptions', function() {
         sentMessageLimit: 0,
       });
       assert.equal(options.sentMessageLimit, 0);
+    });
+  });
+
+  describe('_validateCertificate()', () => {
+    let clientCertificate;
+    beforeEach(() => {
+      clientCertificate = {
+        cert: [{ data: 'test' }],
+        key: [{ data: 'test' }],
+        type: 'pem',
+      };
+    });
+
+    it('Adds warning for missing type', () => {
+      delete clientCertificate.type;
+      const options = new RequestOptions({
+        clientCertificate,
+      });
+      assert.lengthOf(options.validationWarnings, 1);
+    });
+
+    it('Removes configuration when missing type', () => {
+      delete clientCertificate.type;
+      const options = new RequestOptions({
+        clientCertificate,
+      });
+      assert.isUndefined(options.clientCertificate);
+    });
+
+    it('Adds warning for missing cert', () => {
+      delete clientCertificate.cert;
+      const options = new RequestOptions({
+        clientCertificate,
+      });
+      assert.lengthOf(options.validationWarnings, 1);
+    });
+
+    it('Removes configuration when missing type', () => {
+      delete clientCertificate.cert;
+      const options = new RequestOptions({
+        clientCertificate,
+      });
+      assert.isUndefined(options.clientCertificate);
     });
   });
 

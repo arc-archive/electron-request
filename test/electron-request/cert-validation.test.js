@@ -2,7 +2,6 @@ const assert = require('chai').assert;
 const { ElectronRequest } = require('../../');
 
 describe('Responses test', function() {
-  this.timeout(5000);
   const requests = [{
     id: 'r-1',
     url: 'http://localhost/image',
@@ -31,7 +30,7 @@ describe('Responses test', function() {
       }, opts[0]);
       request.once('load', () => done());
       request.once('error', (err) => done(err));
-      request.send();
+      request.send().catch((e) => done(e));
     });
 
     it(`Rejects ${name} cert with validation enabled`, (done) => {
@@ -44,7 +43,7 @@ describe('Responses test', function() {
         done(new Error('Should not load'));
       });
       request.once('error', () => done());
-      request.send();
+      request.send().catch((e) => done(e));
     });
   });
 
@@ -55,6 +54,6 @@ describe('Responses test', function() {
       assert.equal(id, requests[0].id);
       done();
     });
-    request.send();
+    request.send().catch((e) => done(e));
   });
 });

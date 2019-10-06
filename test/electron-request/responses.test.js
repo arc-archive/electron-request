@@ -37,7 +37,6 @@ describe('Responses test', function() {
 });
 
 describe('Stats tests', function() {
-  this.timeout(5000);
   it('Has stast object', (done) => {
     const request = new ElectronRequest({
       id: 'test',
@@ -72,7 +71,7 @@ describe('Stats tests', function() {
   it('Has stats time for ssl', (done) => {
     const request = new ElectronRequest({
       id: 'test',
-      url: 'https://www.google.com',
+      url: 'https://www.google.com/',
       method: 'GET',
     });
     request.once('load', (id, response) => {
