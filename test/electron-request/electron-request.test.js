@@ -3,7 +3,6 @@ const url = require('url');
 const { ElectronRequest } = require('../../');
 
 describe('Electron request basics', function() {
-  this.timeout(10000);
   const requests = [{
     id: 'r-1',
     url: 'http://localhost/get',
@@ -28,6 +27,11 @@ describe('Electron request basics', function() {
     method: 'POST',
     headers: 'Host: localhost\nContent-Length: 3\nx-test: true',
     payload: 'abc',
+  }, {
+    id: 'r-5',
+    url: 'http://localhost/get?a=b&c=d',
+    method: 'GET',
+    headers: 'x-test: true\naccept: application/json',
   }];
 
   const opts = [{
@@ -149,7 +153,7 @@ describe('Electron request basics', function() {
 
     it('Adds default headers', async () => {
       const request = new ElectronRequest(requests[1], {
-        defaultHeaders: true
+        defaultHeaders: true,
       });
       await request._prepareMessage();
       assert.include(request.arcRequest.headers, 'user-agent: advanced-rest-client', 'user-agent is set');
@@ -175,28 +179,16 @@ describe('Electron request basics', function() {
       assert.equal(result.protocol, 'https:');
     });
 
-    it('Sets slashes', () => {
-      const uri = url.parse(requests[3].url);
-      const result = request._createGenericOptions(uri);
-      assert.isTrue(result.slashes);
-    });
-
     it('Sets host', () => {
       const uri = url.parse(requests[3].url);
       const result = request._createGenericOptions(uri);
-      assert.equal(result.host, 'api.com:5123');
+      assert.equal(result.host, 'api.com');
     });
 
     it('Sets port', () => {
       const uri = url.parse(requests[3].url);
       const result = request._createGenericOptions(uri);
       assert.equal(result.port, '5123');
-    });
-
-    it('Sets hostname', () => {
-      const uri = url.parse(requests[3].url);
-      const result = request._createGenericOptions(uri);
-      assert.equal(result.hostname, 'api.com');
     });
 
     it('Sets hash', () => {
@@ -211,16 +203,16 @@ describe('Electron request basics', function() {
       assert.equal(result.search, '?qp1=v1&qp2=v2');
     });
 
-    it('Sets pathname', () => {
-      const uri = url.parse(requests[3].url);
-      const result = request._createGenericOptions(uri);
-      assert.equal(result.pathname, '/path');
-    });
-
     it('Sets path', () => {
       const uri = url.parse(requests[3].url);
       const result = request._createGenericOptions(uri);
-      assert.equal(result.path, '/path?qp1=v1&qp2=v2');
+      assert.equal(result.path, '/path');
+    });
+
+    it('Sets search', () => {
+      const uri = url.parse(requests[3].url);
+      const result = request._createGenericOptions(uri);
+      assert.equal(result.search, '?qp1=v1&qp2=v2');
     });
 
     it('Sets href', () => {
@@ -347,7 +339,7 @@ describe('Electron request basics', function() {
       request.once('error', function(error) {
         done(error);
       });
-      request.send();
+      request.send().catch((e) => done(e));
     });
 
     it('Dispatches "firstbyte" event', function(done) {
@@ -364,7 +356,7 @@ describe('Electron request basics', function() {
       request.once('error', function(error) {
         done(error);
       });
-      request.send();
+      request.send().catch((e) => done(e));
     });
 
     it('Dispatches "loadend" event', function(done) {
@@ -381,7 +373,7 @@ describe('Electron request basics', function() {
       request.once('error', function(error) {
         done(error);
       });
-      request.send();
+      request.send().catch((e) => done(e));
     });
 
     it('Dispatches "headersreceived" event', function(done) {
@@ -398,7 +390,33 @@ describe('Electron request basics', function() {
       request.once('error', function(error) {
         done(error);
       });
-      request.send();
+      request.send().catch((e) => done(e));
+    });
+  });
+
+  describe('Sending request parameters', () => {
+    it('Sends query paramerters to the server', () => {
+      const request = new ElectronRequest(requests[4], opts[0]);
+      request.once('load', (id, response) => {
+        const payloadString = response.payload.toString();
+        const payload = JSON.parse(payloadString);
+        assert.deepEqual(payload.args, { a: 'b', c: 'd' });
+        done();
+      });
+      request.once('error', (error) => done(error));
+      request.send().catch((e) => done(e));
+    });
+
+    it('Sends headers to the server', () => {
+      const request = new ElectronRequest(requests[4], opts[0]);
+      request.once('load', (id, response) => {
+        const payloadString = response.payload.toString();
+        const payload = JSON.parse(payloadString);
+        assert.deepEqual(payload.headers, { 'Host': 'localhost', 'X-Test': 'true' });
+        done();
+      });
+      request.once('error', (error) => done(error));
+      request.send().catch((e) => done(e));
     });
   });
 });

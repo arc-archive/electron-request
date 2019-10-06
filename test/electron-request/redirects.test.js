@@ -28,7 +28,7 @@ describe('Redirects test', function() {
       done();
     });
     request.once('error', (e) => done(e));
-    request.send();
+    request.send().catch((e) => done(e));
   });
 
   it('Redirects with relative URL', function(done) {
@@ -40,7 +40,7 @@ describe('Redirects test', function() {
       done();
     });
     request.once('error', (e) => done(e));
-    request.send();
+    request.send().catch((e) => done(e));
   });
 
   it('Redirect is a response object', function(done) {
@@ -56,6 +56,6 @@ describe('Redirects test', function() {
       done();
     });
     request.once('error', (e) => done(e));
-    request.send();
+    request.send().catch((e) => done(e));
   });
 });
