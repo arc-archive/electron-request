@@ -1,6 +1,6 @@
 {
   "name": "@advanced-rest-client/electron-request",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "description": "ARC socket request for electron",
   "main": "index.js",
   "scripts": {
