@@ -33,7 +33,7 @@ function handleConnection(socket) {
  */
 function connectedCallback(req, res) {
   const cert = req.socket.getPeerCertificate();
-  // console.log(cert);
+  console.log(cert);
   let status;
   let message;
   if (req.client.authorized) {
