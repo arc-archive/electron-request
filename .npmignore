@@ -1,0 +1,10 @@
+coverage/
+test/
+.travis.yml
+index.html
+karma.*
+husky.*
+commitlint.*
+.*
+*.config.*
+prettier.config.js
