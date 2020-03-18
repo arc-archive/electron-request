@@ -5,7 +5,7 @@ const { BaseRequest } = require('../../');
 describe('BaseRequest - abort', function() {
   const requestData = {
     method: 'GET',
-    url: 'https://httpbin.com',
+    url: 'localhost',
     id: 'test-id',
   };
 
@@ -14,11 +14,11 @@ describe('BaseRequest - abort', function() {
       const socket = new net.Socket({
         writable: true,
       });
-      socket.connect(80, 'httpbin.com', () => {
+      socket.connect(80, 'localhost', () => {
         base.socket = socket;
         resolve();
       });
-      socket.on('error', () => {
+      socket.on('error', (e) => {
         reject(new Error('Unable to connect'));
       });
     });
