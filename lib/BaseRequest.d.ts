@@ -83,6 +83,14 @@ export declare class BaseRequest extends EventEmitter {
    */
   readonly followRedirects: boolean;
 
+  on(event: 'beforeredirect', listener: (id: string, detail: object) => void): this;
+  on(event: 'error', listener: (error: Error, id: string, arcRequest: ArcRequest, response: ArcResponse) => void): this;
+  on(event: 'load', listener: (id: string, response: ArcResponse, arcRequest: ArcRequest) => void): this;
+  on(event: 'loadstart', listener: (id: string) => void): this;
+  on(event: 'firstbyte', listener: (id: string) => void): this;
+  on(event: 'headersreceived', listener: (id: string, detail: object) => void): this;
+  on(event: 'loadend', listener: (id: string) => void): this;
+
   constructor(request: ArcRequest, options?: Options);
 
   /**
