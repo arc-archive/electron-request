@@ -79,5 +79,6 @@ module.exports = {
     'no-return-await': 'error',
     'no-template-curly-in-string': 'error',
     'generator-star-spacing': 'off',
+    indent: ['error', 2],
   },
 };
