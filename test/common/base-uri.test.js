@@ -1,27 +1,27 @@
-const assert = require('chai').assert;
+const { assert } = require('chai');
 const { BaseRequest } = require('../../');
 
-describe('BaseRequest uri', function() {
+describe('BaseRequest uri', () => {
   const requestData = {
     method: 'GET',
     url: 'https://domain.com',
     id: 'test-id',
   };
 
-  it('Uri is parsed URL', () => {
+  it('uri is parsed URL', () => {
     const request = new BaseRequest(requestData);
     assert.typeOf(request.uri, 'object');
     assert.equal(request.uri.hostname, 'domain.com');
   });
 
-  it('Change uri', () => {
+  it('changes uri', () => {
     const request = new BaseRequest(requestData);
-    request.uri = 'http://other.com';
+    request._updateUrl('http://other.com');
     assert.typeOf(request.uri, 'object');
     assert.equal(request.uri.hostname, 'other.com');
   });
 
-  it('Applies host rules', () => {
+  it('applies host rules', () => {
     const hosts = [{ from: 'domain.com', to: 'other.com' }];
     const request = new BaseRequest(requestData, {
       hosts,

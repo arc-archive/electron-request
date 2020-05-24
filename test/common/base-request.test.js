@@ -1,8 +1,7 @@
-const assert = require('chai').assert;
-const net = require('net');
+const { assert } = require('chai');
 const { BaseRequest, ArcHeaders } = require('../../');
 
-describe('BaseRequest', function() {
+describe('BaseRequest', () => {
   describe('_prepareHeaders()', () => {
     let request;
     let opts;
@@ -10,10 +9,10 @@ describe('BaseRequest', function() {
       request = {
         url: 'https://api.domain.com',
         method: 'GET',
-        headers: ''
+        headers: '',
       };
       opts = {
-        defaultHeaders: true
+        defaultHeaders: true,
       };
     });
 
@@ -59,7 +58,7 @@ describe('BaseRequest', function() {
     it('skips when user-agent header is set', () => {
       const base = new BaseRequest(request, opts);
       const headers = new ArcHeaders({
-        'user-agent': 'test'
+        'user-agent': 'test',
       });
       base._prepareHeaders(headers);
       assert.equal(headers.get('user-agent'), 'test');
@@ -68,7 +67,7 @@ describe('BaseRequest', function() {
     it('skips when accept header is set', () => {
       const base = new BaseRequest(request, opts);
       const headers = new ArcHeaders({
-        accept: 'test'
+        accept: 'test',
       });
       base._prepareHeaders(headers);
       assert.equal(headers.get('accept'), 'test');

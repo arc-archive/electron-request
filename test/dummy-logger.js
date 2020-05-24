@@ -1,4 +1,9 @@
-const noop = () => {};
+/**
+ * @return {void}
+ */
+const noop = () => {
+  //
+};
 exports.logger = {
   info: noop,
   log: noop,
