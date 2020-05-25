@@ -2,6 +2,7 @@ const { assert } = require('chai');
 const { logger } = require('../dummy-logger.js');
 const { SocketRequest } = require('../../');
 const { startServer, stopServer } = require('../express-api.js');
+const { untilResponse } = require('../Utils.js');
 
 // @ts-ignore
 global.performance = {
@@ -14,25 +15,6 @@ describe('ExpressJS requests', () => {
   before(async () => startServer(httpPort));
 
   after(async () => stopServer());
-
-  /**
-   * @param {SocketRequest} request
-   * @return {Promise}
-   */
-  async function untilResponse(request) {
-    return new Promise((resolve, reject) => {
-      request.on('error', (error) => {
-        reject(error);
-      });
-      request.on('load', (id, response, request) => {
-        resolve({
-          id,
-          response,
-          request,
-        });
-      });
-    });
-  }
 
   describe('POST requests', () => {
     const requestData = {
