@@ -1,8 +1,9 @@
-const assert = require('chai').assert;
+const { assert } = require('chai');
 const url = require('url');
 const { ElectronRequest } = require('../../');
+const { untilBody } = require('../Utils.js');
 
-describe('Electron request basics', function() {
+describe('Electron request basics', () => {
   const requests = [{
     id: 'r-1',
     url: 'http://localhost/get',
@@ -43,27 +44,27 @@ describe('Electron request basics', function() {
     }],
   }];
 
-  describe('_connect()', function() {
+  describe('_connect()', () => {
     let request;
-    before(function() {
+    before(() => {
       request = new ElectronRequest(requests[0], opts[0]);
     });
 
-    it('Returns request object', function(done) {
+    it('Returns request object', (done) => {
       const result = request._connect();
       assert.typeOf(result, 'object');
       result.once('close', () => done());
       result.once('error', () => done());
     });
 
-    it('Sets startTime', function(done) {
+    it('Sets startTime', (done) => {
       const result = request._connect();
       assert.typeOf(request.stats.startTime, 'number');
       result.once('close', () => done());
       result.once('error', () => done());
     });
 
-    it('Sets messageStart', function(done) {
+    it('Sets messageStart', (done) => {
       const result = request._connect();
       assert.typeOf(request.stats.messageStart, 'number');
       result.once('close', () => done());
@@ -71,27 +72,27 @@ describe('Electron request basics', function() {
     });
   });
 
-  describe('_connectSsl()', function() {
+  describe('_connectSsl()', () => {
     let request;
-    beforeEach(function() {
+    beforeEach(() => {
       request = new ElectronRequest(requests[2], opts[0]);
     });
 
-    it('Returns an object', function(done) {
+    it('Returns an object', (done) => {
       const result = request._connectSsl(undefined, request.uri);
       assert.typeOf(result, 'object');
       request.once('load', () => done());
       request.once('error', () => done());
     });
 
-    it('Sets startTime', function(done) {
+    it('Sets startTime', (done) => {
       request._connectSsl(undefined, request.uri);
       assert.typeOf(request.stats.startTime, 'number');
       request.once('load', () => done());
       request.once('error', () => done());
     });
 
-    it('Sets messageStart', function(done) {
+    it('Sets messageStart', (done) => {
       request._connectSsl(undefined, request.uri);
       assert.typeOf(request.stats.messageStart, 'number');
       request.once('load', () => done());
@@ -99,27 +100,27 @@ describe('Electron request basics', function() {
     });
   });
 
-  describe('_connectHttp()', function() {
+  describe('_connectHttp()', () => {
     let request;
-    before(function() {
+    before(() => {
       request = new ElectronRequest(requests[0], opts[0]);
     });
 
-    it('Returns an object', function(done) {
+    it('Returns an object', (done) => {
       const result = request._connectHttp(undefined, request.uri);
       assert.typeOf(result, 'object');
       result.once('close', () => done());
       result.once('error', () => done());
     });
 
-    it('Sets startTime', function(done) {
+    it('Sets startTime', (done) => {
       const result = request._connectHttp(undefined, request.uri);
       assert.typeOf(request.stats.startTime, 'number');
       result.once('close', () => done());
       result.once('error', () => done());
     });
 
-    it('Sets messageStart', function(done) {
+    it('Sets messageStart', (done) => {
       const result = request._connectHttp(undefined, request.uri);
       assert.typeOf(request.stats.messageStart, 'number');
       result.once('close', () => done());
@@ -127,28 +128,24 @@ describe('Electron request basics', function() {
     });
   });
 
-  describe('_prepareMessage()', function() {
-    it('Returns promise resolved to a Buffer', function() {
+  describe('_prepareMessage()', () => {
+    it('Returns promise resolved to a Buffer', async () => {
       const request = new ElectronRequest(requests[1], opts[0]);
-      return request._prepareMessage()
-          .then((result) => assert.isTrue(result instanceof Uint8Array));
+      const result = await request._prepareMessage();
+      assert.isTrue(result instanceof Uint8Array);
     });
 
-    it('Ignores payload for GET requests', function() {
+    it('Ignores payload for GET requests', async () => {
       const request = new ElectronRequest(requests[0], opts[0]);
-      return request._prepareMessage()
-          .then((result) => {
-            assert.isUndefined(result);
-          });
+      const result = await request._prepareMessage();
+      assert.isUndefined(result);
     });
 
-    it('Adds content length header', () => {
+    it('Adds content length header', async () => {
       const request = new ElectronRequest(requests[1], opts[0]);
-      return request._prepareMessage()
-          .then(() => {
-            const search = request.arcRequest.headers.indexOf('content-length: 9');
-            assert.isAbove(search, 0);
-          });
+      await request._prepareMessage();
+      const search = request.arcRequest.headers.indexOf('content-length: 9');
+      assert.isAbove(search, 0);
     });
 
     it('Adds default headers', async () => {
@@ -163,7 +160,7 @@ describe('Electron request basics', function() {
 
   describe('_createGenericOptions()', () => {
     let request;
-    before(function() {
+    before(() => {
       request = new ElectronRequest(requests[3], opts[0]);
     });
 
@@ -197,22 +194,10 @@ describe('Electron request basics', function() {
       assert.equal(result.hash, '#test');
     });
 
-    it('Sets search', () => {
+    it('Sets search parameters with path', () => {
       const uri = url.parse(requests[3].url);
       const result = request._createGenericOptions(uri);
-      assert.equal(result.search, '?qp1=v1&qp2=v2');
-    });
-
-    it('Sets path', () => {
-      const uri = url.parse(requests[3].url);
-      const result = request._createGenericOptions(uri);
-      assert.equal(result.path, '/path');
-    });
-
-    it('Sets search', () => {
-      const uri = url.parse(requests[3].url);
-      const result = request._createGenericOptions(uri);
-      assert.equal(result.search, '?qp1=v1&qp2=v2');
+      assert.equal(result.path, '/path?qp1=v1&qp2=v2');
     });
 
     it('Sets href', () => {
@@ -255,7 +240,7 @@ describe('Electron request basics', function() {
   describe('_addSslOptions()', () => {
     let request;
     let options;
-    before(function() {
+    before(() => {
       request = new ElectronRequest(requests[3], opts[0]);
       options = {};
     });
@@ -281,7 +266,7 @@ describe('Electron request basics', function() {
 
   describe('Starts handlers', () => {
     let request;
-    before(function() {
+    before(() => {
       request = new ElectronRequest(requests[3], opts[0]);
     });
 
@@ -322,72 +307,72 @@ describe('Electron request basics', function() {
     });
   });
 
-  describe('Events', function() {
+  describe('Events', () => {
     let request;
 
-    it('Dispatches "loadstart" event', function(done) {
+    it('Dispatches "loadstart" event', (done) => {
       request = new ElectronRequest(requests[0], opts[0]);
       let called = false;
-      request.once('load', function() {
+      request.once('load', () => {
         assert.isTrue(called);
         done();
       });
-      request.once('loadstart', function(id) {
+      request.once('loadstart', (id) => {
         assert.equal(id, requests[0].id);
         called = true;
       });
-      request.once('error', function(error) {
+      request.once('error', (error) => {
         done(error);
       });
       request.send().catch((e) => done(e));
     });
 
-    it('Dispatches "firstbyte" event', function(done) {
+    it('Dispatches "firstbyte" event', (done) => {
       request = new ElectronRequest(requests[0], opts[0]);
       let called = false;
-      request.once('load', function() {
+      request.once('load', () => {
         assert.isTrue(called);
         done();
       });
-      request.once('firstbyte', function(id) {
+      request.once('firstbyte', (id) => {
         assert.equal(id, requests[0].id);
         called = true;
       });
-      request.once('error', function(error) {
+      request.once('error', (error) => {
         done(error);
       });
       request.send().catch((e) => done(e));
     });
 
-    it('Dispatches "loadend" event', function(done) {
+    it('Dispatches "loadend" event', (done) => {
       request = new ElectronRequest(requests[0], opts[0]);
       let called = false;
-      request.once('load', function() {
+      request.once('load', () => {
         assert.isTrue(called);
         done();
       });
-      request.once('loadend', function(id) {
+      request.once('loadend', (id) => {
         assert.equal(id, requests[0].id);
         called = true;
       });
-      request.once('error', function(error) {
+      request.once('error', (error) => {
         done(error);
       });
       request.send().catch((e) => done(e));
     });
 
-    it('Dispatches "headersreceived" event', function(done) {
+    it('Dispatches "headersreceived" event', (done) => {
       request = new ElectronRequest(requests[0], opts[0]);
       let called = false;
-      request.once('load', function() {
+      request.once('load', () => {
         assert.isTrue(called);
         done();
       });
-      request.once('headersreceived', function(id) {
+      request.once('headersreceived', (id) => {
         assert.equal(id, requests[0].id);
         called = true;
       });
-      request.once('error', function(error) {
+      request.once('error', (error) => {
         done(error);
       });
       request.send().catch((e) => done(e));
@@ -395,9 +380,10 @@ describe('Electron request basics', function() {
   });
 
   describe('Sending request parameters', () => {
-    it('Sends query paramerters to the server', () => {
+    it('Sends query paramerters to the server', (done) => {
       const request = new ElectronRequest(requests[4], opts[0]);
       request.once('load', (id, response) => {
+        assert.ok(id, 'ID is set');
         const payloadString = response.payload.toString();
         const payload = JSON.parse(payloadString);
         assert.deepEqual(payload.args, { a: 'b', c: 'd' });
@@ -407,16 +393,13 @@ describe('Electron request basics', function() {
       request.send().catch((e) => done(e));
     });
 
-    it('Sends headers to the server', () => {
+    it('Sends headers to the server', async () => {
       const request = new ElectronRequest(requests[4], opts[0]);
-      request.once('load', (id, response) => {
-        const payloadString = response.payload.toString();
-        const payload = JSON.parse(payloadString);
-        assert.deepEqual(payload.headers, { 'Host': 'localhost', 'X-Test': 'true' });
-        done();
-      });
-      request.once('error', (error) => done(error));
-      request.send().catch((e) => done(e));
+      await request.send();
+      const response = await untilBody(request);
+      const { headers } = response;
+      assert.equal(headers.Host, 'localhost');
+      assert.equal(headers['X-Test'], 'true');
     });
   });
 });
