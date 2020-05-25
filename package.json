@@ -1,6 +1,6 @@
 {
   "name": "@advanced-rest-client/electron-request",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "ARC socket request for electron",
   "main": "index.js",
   "scripts": {
@@ -31,7 +31,7 @@
     "chai": "^4.2.0",
     "chance": "^1.1.6",
     "cors": "^2.8.5",
-    "electron": "^8.3.0",
+    "electron": "^9.0.0",
     "electron-mocha": "^8.2.2",
     "eslint": "^7.1.0",
     "eslint-config-esnext": "^4.0.0",
@@ -51,7 +51,7 @@
     "typescript": "^3.9.3"
   },
   "peerDependencies": {
-    "electron": "^8.3.0"
+    "electron": "^9.0.0"
   },
   "repository": {
     "type": "git",
