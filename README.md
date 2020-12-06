@@ -92,5 +92,3 @@ Run the tests:
 ```sh
 npm test
 ```
-
-Finally kill the pod:
