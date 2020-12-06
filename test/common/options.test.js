@@ -1,10 +1,10 @@
 const { RequestOptions } = require('../../');
 const assert = require('chai').assert;
 
-describe('RequestOptions', function() {
+describe('RequestOptions', () => {
   describe('validateOptions()', () => {
     describe('_validateOptionsList()', () => {
-      it('Will not set warning for valid options', function() {
+      it('Will not set warning for valid options', () => {
         const options = new RequestOptions();
         options._validateOptionsList({
           validateCertificates: false,
@@ -14,26 +14,28 @@ describe('RequestOptions', function() {
           hosts: [{ from: 'a', to: 'b' }],
           sentMessageLimit: 12,
           nativeTransport: true,
-          defaulAccept: 'application/json',
+          defaultAccept: 'application/json',
           defaultUserAgent: 'my-agent',
           clientCertificate: {
             cert: [{ data: 'test' }],
             key: [{ data: 'test' }],
             type: 'pem',
+            name: 'test-cert',
           },
         });
         assert.lengthOf(options.validationWarnings, 0);
       });
 
-      it('Sets warning for type missmatch', function() {
+      it('Sets warning for type mismatch', () => {
         const options = new RequestOptions();
         options._validateOptionsList({
+          // @ts-ignore
           validateCertificates: 'false',
         });
         assert.lengthOf(options.validationWarnings, 1);
       });
 
-      it('Ignores "undefined" missmatch', function() {
+      it('Ignores "undefined" mismatch', () => {
         const options = new RequestOptions();
         options._validateOptionsList({
           sentMessageLimit: undefined,
@@ -41,90 +43,100 @@ describe('RequestOptions', function() {
         assert.lengthOf(options.validationWarnings, 0);
       });
 
-      it('Sets default value for type missmatch', function() {
+      it('Sets default value for type mismatch', () => {
         const options = new RequestOptions();
         options._validateOptionsList({
+          // @ts-ignore
           validateCertificates: 'false',
         });
         assert.isFalse(options.validateCertificates);
       });
 
-      it('Sets warning for unknown property', function() {
+      it('Sets warning for unknown property', () => {
         const options = new RequestOptions();
         options._validateOptionsList({
+          // @ts-ignore
           unknown: 1,
         });
         assert.lengthOf(options.validationWarnings, 1);
       });
 
-      it('Removes unknown property', function() {
+      it('Removes unknown property', () => {
         const options = new RequestOptions();
         options._validateOptionsList({
+          // @ts-ignore
           unknown: 1,
         });
+        // @ts-ignore
         assert.isUndefined(options.options);
       });
     });
 
     describe('_validateLogger()', () => {
-      it('Should set warning for invalid object', function() {
+      it('Should set warning for invalid object', () => {
         const options = new RequestOptions({
+          // @ts-ignore
           logger: {},
         });
         assert.lengthOf(options.validationWarnings, 1);
       });
 
-      it('Should set warning when missing info method', function() {
+      it('Should set warning when missing info method', () => {
         const options = new RequestOptions({
           logger: {
-            log: function() {},
-            warning: function() {},
-            error: function() {},
+            log: () => {},
+            // @ts-ignore
+            warning: () => {},
+            error: () => {},
           },
         });
         assert.lengthOf(options.validationWarnings, 1);
       });
 
-      it('Should set warning when missing log method', function() {
+      it('Should set warning when missing log method', () => {
         const options = new RequestOptions({
           logger: {
-            info: function() {},
-            warning: function() {},
-            error: function() {},
+            info: () => {},
+            // @ts-ignore
+            warning: () => {},
+            error: () => {},
           },
         });
         assert.lengthOf(options.validationWarnings, 1);
       });
 
-      it('Should set warning when missing warning method', function() {
+      it('Should set warning when missing warning method', () => {
         const options = new RequestOptions({
+          // @ts-ignore
           logger: {
-            info: function() {},
-            log: function() {},
-            error: function() {},
+            info: () => {},
+            log: () => {},
+            error: () => {},
           },
         });
         assert.lengthOf(options.validationWarnings, 1);
       });
 
-      it('Should set warning when missing error method', function() {
+      it('Should set warning when missing error method', () => {
         const options = new RequestOptions({
           logger: {
-            info: function() {},
-            log: function() {},
-            warning: function() {},
+            info: () => {},
+            log: () => {},
+            // @ts-ignore
+            warning: () => {},
           },
         });
         assert.lengthOf(options.validationWarnings, 1);
       });
 
-      it('Should not set warning when walid', function() {
+      it('Should not set warning when valid', () => {
         const options = new RequestOptions({
+          // @ts-ignore
           logger: {
-            info: function() {},
-            log: function() {},
-            warn: function() {},
-            error: function() {},
+            info: () => {},
+            log: () => {},
+            warn: () => {},
+            error: () => {},
           },
         });
         assert.lengthOf(options.validationWarnings, 0);
@@ -133,7 +145,7 @@ describe('RequestOptions', function() {
   });
 
   describe('_validateMessageLimit()', () => {
-    it('Adds warning for negative messsage limit', () => {
+    it('Adds warning for negative message limit', () => {
       const options = new RequestOptions({
         sentMessageLimit: -1,
       });
@@ -201,27 +213,27 @@ describe('RequestOptions', function() {
   describe('_setDefaults()', () => {
     let options;
 
-    before(function() {
+    before(() => {
       options = new RequestOptions();
     });
 
-    it('validateCertificates is false', function() {
+    it('validateCertificates is false', () => {
       assert.isFalse(options.validateCertificates);
     });
 
-    it('followRedirects is true', function() {
+    it('followRedirects is true', () => {
       assert.isTrue(options.followRedirects);
     });
 
-    it('sentMessageLimit is set', function() {
+    it('sentMessageLimit is set', () => {
       assert.equal(options.sentMessageLimit, 2048);
     });
 
-    it('defaulAccept is set', function() {
-      assert.equal(options.defaulAccept, '*/*');
+    it('defaultAccept is set', () => {
+      assert.equal(options.defaultAccept, '*/*');
     });
 
-    it('defaultUserAgent is set', function() {
+    it('defaultUserAgent is set', () => {
       assert.equal(options.defaultUserAgent, 'advanced-rest-client');
     });
   });

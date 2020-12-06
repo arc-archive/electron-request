@@ -1,10 +1,15 @@
 const { assert } = require('chai');
 const { BaseRequest, ArcHeaders } = require('../../');
 
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
+/** @typedef {import('../../lib/RequestOptions').Options} Options */
+
 describe('BaseRequest', () => {
   describe('_prepareHeaders()', () => {
-    let request;
-    let opts;
+    let request = /** @type ArcBaseRequest */ (null);
+    let opts = /** @type Options */ (null);
+    const id = 'test-id';
+
     beforeEach(() => {
       request = {
         url: 'https://api.domain.com',
@@ -17,14 +22,14 @@ describe('BaseRequest', () => {
     });
 
     it('adds default user-agent', () => {
-      const base = new BaseRequest(request, opts);
+      const base = new BaseRequest(request, id, opts);
       const headers = new ArcHeaders();
       base._prepareHeaders(headers);
       assert.equal(headers.get('user-agent'), 'advanced-rest-client');
     });
 
     it('adds default accept', () => {
-      const base = new BaseRequest(request, opts);
+      const base = new BaseRequest(request, id, opts);
       const headers = new ArcHeaders();
       base._prepareHeaders(headers);
       assert.equal(headers.get('accept'), '*/*');
@@ -32,15 +37,15 @@ describe('BaseRequest', () => {
 
     it('adds configured user-agent', () => {
       opts.defaultUserAgent = 'test';
-      const base = new BaseRequest(request, opts);
+      const base = new BaseRequest(request, id, opts);
       const headers = new ArcHeaders();
       base._prepareHeaders(headers);
       assert.equal(headers.get('user-agent'), 'test');
     });
 
     it('adds configured accept', () => {
-      opts.defaulAccept = 'test';
-      const base = new BaseRequest(request, opts);
+      opts.defaultAccept = 'test';
+      const base = new BaseRequest(request, id, opts);
       const headers = new ArcHeaders();
       base._prepareHeaders(headers);
       assert.equal(headers.get('accept'), 'test');
@@ -48,7 +53,7 @@ describe('BaseRequest', () => {
 
     it('ignores adding headers when no config option', () => {
       opts.defaultHeaders = false;
-      const base = new BaseRequest(request, opts);
+      const base = new BaseRequest(request, id, opts);
       const headers = new ArcHeaders();
       base._prepareHeaders(headers);
       assert.isFalse(headers.has('user-agent'), 'user-agent is not set');
@@ -56,7 +61,7 @@ describe('BaseRequest', () => {
     });
 
     it('skips when user-agent header is set', () => {
-      const base = new BaseRequest(request, opts);
+      const base = new BaseRequest(request, id, opts);
       const headers = new ArcHeaders({
         'user-agent': 'test',
       });
@@ -65,7 +70,7 @@ describe('BaseRequest', () => {
     });
 
     it('skips when accept header is set', () => {
-      const base = new BaseRequest(request, opts);
+      const base = new BaseRequest(request, id, opts);
       const headers = new ArcHeaders({
         accept: 'test',
       });

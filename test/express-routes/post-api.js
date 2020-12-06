@@ -11,7 +11,7 @@ module.exports = router;
 /**
  * Tests query parameters.
  */
-class QuaramsApiRoute extends BaseApi {
+class PostApiRoute extends BaseApi {
   /**
    * @constructor
    */
@@ -21,17 +21,21 @@ class QuaramsApiRoute extends BaseApi {
   }
 
   /**
-   * List tests
+   * List headers
    * @param {Request} req
    * @param {Response} res
    * @return {Promise}
    */
-  async listParams(req, res) {
-    const { query } = req;
-    res.send({ params: { query } });
+  async echoProperties(req, res) {
+    const { headers, query } = req;
+    let { body } = req;
+    if (body instanceof Buffer) {
+      body = body.toString();
+    }
+    res.send({ headers, query, body });
   }
 }
-const api = new QuaramsApiRoute();
+const api = new PostApiRoute();
 api.setCors(router);
 const checkCorsFn = api._processCors;
-router.get('/', cors(checkCorsFn), api.listParams.bind(api));
+router.post('/', cors(checkCorsFn), api.echoProperties.bind(api));

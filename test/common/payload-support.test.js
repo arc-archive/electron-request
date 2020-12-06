@@ -2,8 +2,8 @@ const assert = require('chai').assert;
 const { PayloadSupport } = require('../../');
 const { ArcHeaders } = require('../../');
 
-describe('PayloadSupport tests', function() {
-  describe('blob2buffer()', function() {
+describe('PayloadSupport tests', () => {
+  describe('blob2buffer()', () => {
     const blob = new Blob(['abc'], { type: 'text/plain' });
 
     it('Returns a promise', () => {
@@ -12,122 +12,96 @@ describe('PayloadSupport tests', function() {
       return result.then(() => {});
     });
 
-    it('Promise resolves to a buffer', () => {
-      return PayloadSupport.blob2buffer(blob)
-          .then((result) => {
-            assert.isTrue(result instanceof Buffer);
-          });
+    it('Promise resolves to a buffer', async () => {
+      const result = await PayloadSupport.blob2buffer(blob);
+      assert.isTrue(result instanceof Buffer);
     });
 
-    it('Buffer has blob\'s data', () => {
-      return PayloadSupport.blob2buffer(blob)
-          .then((result) => {
-            const compare = Buffer.from([97, 98, 99]);
-            assert.equal(result.compare(compare), 0);
-          });
+    it('Buffer has blob\'s data', async () => {
+      const result = await PayloadSupport.blob2buffer(blob);
+      const compare = Buffer.from([97, 98, 99]);
+      assert.equal(result.compare(compare), 0);
     });
   });
 
-  describe('normalizeString()', function() {
-    it('Normalizes LF', function() {
+  describe('normalizeString()', () => {
+    it('Normalizes LF', () => {
       const str = 'a\nb\nc';
       const result = PayloadSupport.normalizeString(str);
       assert.equal(result, 'a\r\nb\r\nc');
     });
 
-    it('Normalizes CR', function() {
+    it('Normalizes CR', () => {
       const str = 'a\rb\rc';
       const result = PayloadSupport.normalizeString(str);
       assert.equal(result, 'a\r\nb\r\nc');
     });
 
-    it('Normalizes CRLF', function() {
+    it('Normalizes CRLF', () => {
       const str = 'a\r\nb\r\nc';
       const result = PayloadSupport.normalizeString(str);
       assert.equal(result, 'a\r\nb\r\nc');
     });
   });
 
-  describe('payloadToBuffer()', function() {
+  describe('payloadToBuffer()', () => {
     let headers;
     beforeEach(() => {
       headers = new ArcHeaders();
     });
 
-    it('Returns a promise', () => {
-      const result = PayloadSupport.payloadToBuffer(undefined, headers);
-      assert.typeOf(result.then, 'function');
-      return result.then(() => {});
+    it('Returns undefined if no data', async () => {
+      const result = await PayloadSupport.payloadToBuffer(undefined, headers);
+      assert.isUndefined(result);
     });
 
-    it('Returns undefined if no data', () => {
-      return PayloadSupport.payloadToBuffer(undefined, headers)
-          .then((result) => {
-            assert.isUndefined(result);
-          });
+    it('Returns normalized string buffer', async () => {
+      const result = await PayloadSupport.payloadToBuffer('a\nb\nc', headers);
+      assert.equal(result.compare(Buffer.from('a\r\nb\r\nc')), 0);
     });
 
-    it('Returns normalized string buffer', () => {
-      return PayloadSupport.payloadToBuffer('a\nb\nc', headers)
-          .then((result) => {
-            assert.equal(result.compare(Buffer.from('a\r\nb\r\nc')), 0);
-          });
-    });
-
-    it('Returns buffer from array buffer', function() {
+    it('Returns buffer from array buffer', async () => {
       const typed = new Uint8Array([97, 98, 99]);
-      return PayloadSupport.payloadToBuffer(typed.buffer, headers)
-          .then((result) => {
-            const compare = Buffer.from([97, 98, 99]);
-            assert.equal(result.compare(compare), 0);
-          });
+      const result = await PayloadSupport.payloadToBuffer(typed.buffer, headers);
+      const compare = Buffer.from([97, 98, 99]);
+      assert.equal(result.compare(compare), 0);
     });
 
-    it('Returns buffer for FormData', () => {
+    it('Returns buffer for FormData', async () => {
       const fd = new FormData();
       fd.append('a', 'b');
-      return PayloadSupport.payloadToBuffer(fd, headers)
-          .then((result) => {
-            const strValue = result.toString();
-            const val = 'Content-Disposition: form-data; name="a"\r\n\r\nb';
-            assert.notEqual(strValue.indexOf(val), -1);
-          });
+      const result = await PayloadSupport.payloadToBuffer(fd, headers);
+      const strValue = result.toString();
+      const val = 'Content-Disposition: form-data; name="a"\r\n\r\nb';
+      assert.notEqual(strValue.indexOf(val), -1);
     });
 
-    it('FormData sets content type header', () => {
+    it('FormData sets content type header', async () => {
       const fd = new FormData();
       fd.append('a', 'b');
       headers.set('Content-type', 'x-type');
-      return PayloadSupport.payloadToBuffer(fd, headers)
-          .then(() => {
-            assert.notEqual(headers.get('content-type'), 'x-type');
-          });
+      await PayloadSupport.payloadToBuffer(fd, headers);
+      assert.notEqual(headers.get('content-type'), 'x-type');
     });
 
-    it('Creates buffer from blob', () => {
+    it('Creates buffer from blob', async () => {
       const blob = new Blob(['abc'], { type: 'text/plain' });
-      return PayloadSupport.payloadToBuffer(blob, headers)
-          .then((result) => {
-            const compare = Buffer.from([97, 98, 99]);
-            assert.equal(result.compare(compare), 0);
-          });
+      const result = await PayloadSupport.payloadToBuffer(blob, headers);
+      const compare = Buffer.from([97, 98, 99]);
+      assert.equal(result.compare(compare), 0);
     });
 
-    it('Sets content type from blob', () => {
+    it('Sets content type from blob', async () => {
       const blob = new Blob(['abc'], { type: 'text/x-plain' });
-      return PayloadSupport.payloadToBuffer(blob, headers)
-          .then(() => {
-            assert.equal(headers.get('content-type'), 'text/x-plain');
-          });
+      await PayloadSupport.payloadToBuffer(blob, headers);
+      assert.equal(headers.get('content-type'), 'text/x-plain');
     });
 
-    it('Ignores blob\'s type if content-type is set', () => {
+    it('Ignores blob\'s type if content-type is set', async () => {
       const blob = new Blob(['abc'], { type: 'text/x-plain' });
       headers.set('Content-type', 'x-type');
-      return PayloadSupport.payloadToBuffer(blob, headers)
-          .then(() => {
-            assert.equal(headers.get('content-type'), 'x-type');
-          });
+      await PayloadSupport.payloadToBuffer(blob, headers);
+      assert.equal(headers.get('content-type'), 'x-type');
     });
   });
 });

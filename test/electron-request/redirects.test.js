@@ -1,61 +1,158 @@
 const assert = require('chai').assert;
 const { ElectronRequest } = require('../../');
+const ExpressServer = require('../express-api.js');
+const { untilResponse } = require('../Utils.js');
 
-describe('Redirects test', function() {
-  const requests = [{
-    id: 'r-1',
-    url: 'http://localhost/absolute-redirect/2',
-    method: 'GET',
-  }, {
-    id: 'r-2',
-    url: 'http://localhost/relative-redirect/2',
-    method: 'GET',
-  }, {
-    id: 'r-3',
-    url: 'http://localhost/relative-redirect/1',
-    method: 'GET',
-  }];
-  const opts = [{
-    followRedirects: true,
-  }];
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
+/** @typedef {import('../../lib/RequestOptions').Options} Options */
 
-  it('Redirects with absolute URL', function(done) {
-    const request = new ElectronRequest(requests[0], opts[0]);
-    request.once('load', (id, response) => {
-      assert.equal(id, requests[0].id);
-      assert.typeOf(response.redirects, 'array');
-      assert.lengthOf(response.redirects, 2);
-      done();
-    });
-    request.once('error', (e) => done(e));
-    request.send().catch((e) => done(e));
+describe('ElectronRequest', () => {
+  const requestId = 'test-id';
+  const expressPort = 8125;
+  before(async () => {
+    // await chunkedServer.startServer(httpPort, sslPort);
+    await ExpressServer.startServer(expressPort);
   });
 
-  it('Redirects with relative URL', function(done) {
-    const request = new ElectronRequest(requests[1], opts[0]);
-    request.once('load', (id, response) => {
-      assert.equal(id, requests[1].id);
-      assert.typeOf(response.redirects, 'array');
-      assert.lengthOf(response.redirects, 2);
-      done();
-    });
-    request.once('error', (e) => done(e));
-    request.send().catch((e) => done(e));
+  after(async () => {
+    // await chunkedServer.stopServer();
+    await ExpressServer.stopServer();
   });
 
-  it('Redirect is a response object', function(done) {
-    const request = new ElectronRequest(requests[2], opts[0]);
-    request.once('load', (id, response) => {
-      const r = response.redirects[0];
-      assert.typeOf(r, 'object');
-      assert.equal(r.status, 302);
-      assert.equal(r.statusText, 'FOUND');
-      assert.typeOf(r.headers, 'string');
-      assert.equal(r.url, 'http://localhost/relative-redirect/1');
-      assert.typeOf(r.stats, 'object');
-      done();
+  describe('Redirects test', () => {
+    describe('Absolute redirects', () => {
+      const baseRequest = /** @type ArcBaseRequest */ (Object.freeze({
+        url: `http://localhost:${expressPort}/v1/redirect/absolute/2?test=true`,
+        method: 'GET',
+      }));
+
+      it('redirects to an absolute URL', async () => {
+        const request = new ElectronRequest(baseRequest, requestId);
+        await request.send();
+        const { response } = await untilResponse(request);
+        const { redirects } = response;
+        assert.typeOf(redirects, 'array');
+        assert.lengthOf(redirects, 2);
+      });
+
+      it('has the redirects data', async () => {
+        const request = new ElectronRequest(baseRequest, requestId);
+        await request.send();
+        const { response } = await untilResponse(request);
+        const { redirects } = response;
+        const [rdr1] = redirects;
+        const location = `http://localhost:${expressPort}/v1/redirect/absolute/1?test=true`;
+        assert.equal(rdr1.url, location, 'has the redirect URL');
+        assert.typeOf(rdr1.startTime, 'number', 'has the startTime property');
+        assert.typeOf(rdr1.endTime, 'number', 'has the endTime property');
+        assert.typeOf(rdr1.timings, 'object', 'has the timings property');
+        assert.typeOf(rdr1.response, 'object', 'has the response property');
+        assert.equal(rdr1.response.status, 302, 'has the status code');
+        assert.equal(rdr1.response.statusText, 'Found', 'has the status text');
+        assert.typeOf(rdr1.response.headers, 'string', 'has the headers');
+        const body = rdr1.response.payload.toString();
+        const parsed = JSON.parse(body);
+        assert.equal(parsed.location, location, 'has the payload');
+      });
+
+      it('has the final response', async () => {
+        const request = new ElectronRequest(baseRequest, requestId);
+        await request.send();
+        const { response, transport } = await untilResponse(request);
+        const location = `http://localhost:${expressPort}/v1/get?test=true`;
+        assert.equal(transport.url, location, 'transport request has the final URL');
+        assert.equal(response.status, 200, 'has the status code');
+      });
     });
-    request.once('error', (e) => done(e));
-    request.send().catch((e) => done(e));
+
+    describe('Relative redirects - relative path', () => {
+      const baseRequest = /** @type ArcBaseRequest */ (Object.freeze({
+        url: `http://localhost:${expressPort}/v1/redirect/relative/2?test=true`,
+        method: 'GET',
+      }));
+
+      it('redirects to a relative URL', async () => {
+        const request = new ElectronRequest(baseRequest, requestId);
+        await request.send();
+        const { response } = await untilResponse(request);
+        const { redirects } = response;
+        assert.typeOf(redirects, 'array');
+        assert.lengthOf(redirects, 2);
+      });
+
+      it('has the redirects data', async () => {
+        const request = new ElectronRequest(baseRequest, requestId);
+        await request.send();
+        const { response } = await untilResponse(request);
+        const { redirects } = response;
+        const [rdr1] = redirects;
+        const location = `http://localhost:${expressPort}/v1/redirect/relative/1?test=true`;
+        assert.equal(rdr1.url, location, 'has the redirect URL');
+        assert.typeOf(rdr1.startTime, 'number', 'has the startTime property');
+        assert.typeOf(rdr1.endTime, 'number', 'has the endTime property');
+        assert.typeOf(rdr1.timings, 'object', 'has the timings property');
+        assert.typeOf(rdr1.response, 'object', 'has the response property');
+        assert.equal(rdr1.response.status, 302, 'has the status code');
+        assert.equal(rdr1.response.statusText, 'Found', 'has the status text');
+        assert.typeOf(rdr1.response.headers, 'string', 'has the headers');
+        const body = rdr1.response.payload.toString();
+        const parsed = JSON.parse(body);
+        assert.equal(parsed.location, '../relative/1?test=true', 'has the payload');
+      });
+
+      it('has the final response', async () => {
+        const request = new ElectronRequest(baseRequest, requestId);
+        await request.send();
+        const { response, transport } = await untilResponse(request);
+        const location = `http://localhost:${expressPort}/v1/get?test=true`;
+        assert.equal(transport.url, location, 'transport request has the final URL');
+        assert.equal(response.status, 200, 'has the status code');
+      });
+    });
+
+    describe('Relative redirects - root path', () => {
+      const baseRequest = /** @type ArcBaseRequest */ (Object.freeze({
+        url: `http://localhost:${expressPort}/v1/redirect/relative-root/2?test=true`,
+        method: 'GET',
+      }));
+
+      it('redirects to a relative URL', async () => {
+        const request = new ElectronRequest(baseRequest, requestId);
+        await request.send();
+        const { response } = await untilResponse(request);
+        const { redirects } = response;
+        assert.typeOf(redirects, 'array');
+        assert.lengthOf(redirects, 2);
+      });
+
+      it('has the redirects data', async () => {
+        const request = new ElectronRequest(baseRequest, requestId);
+        await request.send();
+        const { response } = await untilResponse(request);
+        const { redirects } = response;
+        const [rdr1] = redirects;
+        const location = `http://localhost:${expressPort}/v1/redirect/relative/1?test=true`;
+        assert.equal(rdr1.url, location, 'has the redirect URL');
+        assert.typeOf(rdr1.startTime, 'number', 'has the startTime property');
+        assert.typeOf(rdr1.endTime, 'number', 'has the endTime property');
+        assert.typeOf(rdr1.timings, 'object', 'has the timings property');
+        assert.typeOf(rdr1.response, 'object', 'has the response property');
+        assert.equal(rdr1.response.status, 302, 'has the status code');
+        assert.equal(rdr1.response.statusText, 'Found', 'has the status text');
+        assert.typeOf(rdr1.response.headers, 'string', 'has the headers');
+        const body = rdr1.response.payload.toString();
+        const parsed = JSON.parse(body);
+        assert.equal(parsed.location, '/v1/redirect/relative/1?test=true', 'has the payload');
+      });
+
+      it('has the final response', async () => {
+        const request = new ElectronRequest(baseRequest, requestId);
+        await request.send();
+        const { response, transport } = await untilResponse(request);
+        const location = `http://localhost:${expressPort}/v1/get?test=true`;
+        assert.equal(transport.url, location, 'transport request has the final URL');
+        assert.equal(response.status, 200, 'has the status code');
+      });
+    });
   });
 });

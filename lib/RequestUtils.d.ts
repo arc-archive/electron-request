@@ -2,7 +2,7 @@ import { ArcHeaders } from './ArcHeaders';
 
 export declare interface RedirectOptions {
   /**
-   * true if reqirect is required
+   * true if redirect is required
    */
   redirect?: boolean;
   /**
@@ -12,7 +12,7 @@ export declare interface RedirectOptions {
   /**
    * location of the resource (redirect uri)
    */
-  location: string;
+  location?: string;
 }
 
 /**
@@ -23,11 +23,11 @@ export declare class RequestUtils {
   /**
    * Reads a port number for a connection.
    *
-   * @param port Existing information abour port.
+   * @param port Existing information about port.
    * @param protocol Request protocol. Only used if `port` is not set.
    * @returns A port number. Default to 80.
    */
-  static getPort(port: string|number, protocol: string): number;
+  static getPort(port: string|number, protocol?: string): number;
 
   /**
    * Creates a value for host header.
@@ -60,10 +60,10 @@ export declare class RequestUtils {
   static redirectOptions(status: number, method: string, location?: string): RedirectOptions;
 
   /**
-   * Checks if requrect is an infinite loop.
+   * Checks if redirect is an infinite loop.
    * @param location Redirect location
    * @param redirects List of response objects
-   * @returns True if redirect is into the same plase as already visited.
+   * @returns True if redirect is into the same place as already visited.
    */
   static isRedirectLoop(location: string, redirects: Set<Object>): boolean;
 

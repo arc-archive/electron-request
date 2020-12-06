@@ -2,11 +2,10 @@ const http = require('http');
 const https = require('https');
 const path = require('path');
 const fs = require('fs-extra');
-
 const Chance = require('chance');
 const chance = new Chance();
 
-const srvs = {
+const servers = {
   srv: undefined,
   ssl: undefined,
 };
@@ -14,10 +13,15 @@ const srvs = {
 require('ssl-root-cas')
   .inject()
   .addFile(path.join('test', 'certs', 'ca.cert.pem'));
+
+/** @typedef {import('http').IncomingMessage} IncomingMessage */
+/** @typedef {import('http').ServerResponse} ServerResponse */
+/** @typedef {import('net').Socket} Socket */
+
 /**
- * Writes a chaunk of data to the response.
+ * Writes a chunk of data to the response.
  *
- * @param {Object} res Node's response object
+ * @param {ServerResponse} res Node's response object
  */
 function writeChunk(res) {
   const word = chance.word({ length: 128 });
@@ -26,7 +30,7 @@ function writeChunk(res) {
 /**
  * Writes chunk type response to the client.
  *
- * @param {Object} res Node's response object
+ * @param {ServerResponse} res Node's response object
  */
 function writeChunkedResponse(res) {
   res.writeHead(200, {
@@ -38,7 +42,7 @@ function writeChunkedResponse(res) {
   for (let i = 0; i < 4; i++) {
     const timeout = chance.integer({ min: 1, max: 10 });
     time += timeout;
-    setTimeout(writeChunk(res), timeout);
+    setTimeout(() => writeChunk(res), timeout);
   }
   time += 5;
   setTimeout(() => {
@@ -49,8 +53,8 @@ function writeChunkedResponse(res) {
 /**
  * Callback for client connection.
  *
- * @param {[type]} req Node's request object
- * @param {Object} res Node's response object
+ * @param {IncomingMessage} req Node's request object
+ * @param {ServerResponse} res Node's response object
  */
 function connectedCallback(req, res) {
   writeChunkedResponse(res);
@@ -59,8 +63,8 @@ function connectedCallback(req, res) {
 /**
  * Callback for client connection over SSL.
  *
- * @param {[type]} req Node's request object
- * @param {Object} res Node's response object
+ * @param {IncomingMessage} req Node's request object
+ * @param {ServerResponse} res Node's response object
  */
 function connectedSslCallback(req, res) {
   writeChunkedResponse(res);
@@ -71,7 +75,7 @@ const socketMap = {};
 
 /**
  * Caches sockets after connection.
- * @param {object} socket
+ * @param {Socket} socket
  */
 function handleConnection(socket) {
   const socketKey = ++lastSocketKey;
@@ -84,20 +88,20 @@ function handleConnection(socket) {
 /**
  * Launches HTTP server
  * @param {number} httpPort
- * @return {Promise}
+ * @return {Promise<void>}
  */
 function startHttpServer(httpPort) {
   return new Promise((resolve) => {
-    srvs.srv = http.createServer(connectedCallback);
-    srvs.srv.listen(httpPort, () => resolve());
-    srvs.srv.on('connection', handleConnection);
+    servers.srv = http.createServer(connectedCallback);
+    servers.srv.listen(httpPort, () => resolve());
+    servers.srv.on('connection', handleConnection);
   });
 }
 
 /**
  * Launches HTTPS server
  * @param {number} sslPort
- * @return {Promise}
+ * @return {Promise<void>}
  */
 async function startHttpsServer(sslPort) {
   const key = await fs.readFile(path.join('test', 'certs', 'privkey.pem'));
@@ -107,17 +111,20 @@ async function startHttpsServer(sslPort) {
       key,
       cert,
     };
-    srvs.ssl = https.createServer(options, connectedSslCallback);
-    srvs.ssl.listen(sslPort, () => resolve());
-    srvs.ssl.on('connection', handleConnection);
+    servers.ssl = https.createServer(options, connectedSslCallback);
+    servers.ssl.listen(sslPort, () => resolve());
+    servers.ssl.on('connection', handleConnection);
   });
 }
 
-exports.startServer = function (httpPort, sslPort) {
-  return Promise.all([startHttpServer(httpPort), startHttpsServer(sslPort)]);
-};
+/**
+ * @param {number} httpPort
+ * @param {number} sslPort
+ * @return {Promise<void[]>}
+ */
+exports.startServer = (httpPort, sslPort) => Promise.all([startHttpServer(httpPort), startHttpsServer(sslPort)]);
 
-exports.stopServer = function () {
+exports.stopServer = () => {
   Object.keys(socketMap).forEach((socketKey) => {
     if (socketMap[socketKey].destroyed) {
       return;
@@ -125,10 +132,10 @@ exports.stopServer = function () {
     socketMap[socketKey].destroy();
   });
   const p1 = new Promise((resolve) => {
-    srvs.srv.close(() => resolve());
+    servers.srv.close(() => resolve());
   });
   const p2 = new Promise((resolve) => {
-    srvs.ssl.close(() => resolve());
+    servers.ssl.close(() => resolve());
   });
   return Promise.all([p1, p2]);
 };

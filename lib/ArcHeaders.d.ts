@@ -6,7 +6,7 @@ export declare class ArcHeaders {
   /**
    * Holds the values.
    */
-  map: object;
+  map: any;
   constructor(headers?: ArcHeaders|Headers|string|string[]|Object);
 
   /**
@@ -38,9 +38,9 @@ export declare class ArcHeaders {
 
   /**
    * Executes the `callback` function for each item passing the item
-   * as an agrument.
+   * as an argument.
    */
-  forEach(callback: Function, thisArg: any): void;
+  forEach(callback: Function, thisArg?: any): void;
 
   /**
    * @returns Headers HTTP string

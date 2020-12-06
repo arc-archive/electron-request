@@ -1,8 +1,8 @@
-import { URL } from 'url';
+import { URL, UrlWithStringQuery } from 'url';
 import { ClientRequest } from 'http';
 import { Socket } from 'net';
+import { ArcRequest } from '@advanced-rest-client/arc-types';
 import { BaseRequest } from './BaseRequest.js';
-import { ArcRequest } from './RequestTypes';
 import { Options } from './RequestOptions';
 
 /**
@@ -10,10 +10,11 @@ import { Options } from './RequestOptions';
  */
 export declare class ElectronRequest extends BaseRequest {
   /**
-   * @param {ArcRequest} request
-   * @param {Options=} options
+   * @param request
+   * The id of the request, used with events and when reporting the response.
+   * @param options
    */
-  constructor(request: ArcRequest, options?: Options);
+  constructor(request: ArcRequest.ArcBaseRequest, id: string, options?: Options);
 
   /**
    * Cleans the state after finished.
@@ -47,10 +48,9 @@ export declare class ElectronRequest extends BaseRequest {
 
   /**
    * Creates a default options for a request.
-   * @param {URL} uri Instance of URL class for current URL.
-   * @return {Object}
+   * @param uri Instance of URL class for current URL.
    */
-  _createGenericOptions(uri: URL): object;
+  _createGenericOptions(uri: URL|UrlWithStringQuery): any;
 
   /**
    * Adds SSL options to the request.

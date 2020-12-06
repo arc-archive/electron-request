@@ -6,33 +6,12 @@ import { RequestOptions, Logger } from './RequestOptions';
 import { ArcHeaders } from './ArcHeaders';
 import { Options } from './RequestOptions';
 import { RedirectOptions } from './RequestUtils';
-import { ArcRequest, ArcResponse, ArcCertificate, RequestTimings, ResponsePublishOptions, HostRule } from './RequestTypes';
+import { ResponsePublishOptions, RequestStats } from './RequestTypes';
+import { ArcRequest, HostRule, ClientCertificate, ArcResponse } from '@advanced-rest-client/arc-types';
 
 declare interface ErrorRequestOptions {
   code?: number;
   message?: string;
-}
-
-declare interface AuthStruct {
-  method: string;
-  headers?: string;
-  state?: number;
-  challengeHeader?: string;
-}
-
-declare interface RequestStats {
-  firstReceiveTime?: number;
-  lastReceivedTime?: number;
-  messageStart?: number;
-  sentTime?: number;
-  connectionTime?: number;
-  lookupTime?: number;
-  connectedTime?: number;
-  secureStartTime?: number;
-  secureConnectedTime?: number;
-  startTime?: number;
-  responseTime?: number;
-  receivingTime?: number;
 }
 
 /**
@@ -41,7 +20,7 @@ declare interface RequestStats {
 export declare class BaseRequest extends EventEmitter {
   opts: RequestOptions;
   logger: Logger;
-  arcRequest: ArcRequest;
+  arcRequest: ArcRequest.ArcBaseRequest;
   /**
    * When true the request has been aborted.
    */
@@ -57,7 +36,7 @@ export declare class BaseRequest extends EventEmitter {
   /**
    * Hosts table. See options class for description.
    */
-  hosts: HostRule[];
+  hosts: HostRule.HostRule[];
   /**
    * Parsed value of the request URL.
    */
@@ -66,14 +45,26 @@ export declare class BaseRequest extends EventEmitter {
   /**
    * Host header can be different than registered URL because of
    * `hosts` rules.
-   * If a rule changes host value of the URL the original URL's host value
-   * is used when generating the request and not overriden one.
-   * This way virual hosts can be tested using hosts.
+   * If a rule changes host value of the URL the original URL host value
+   * is used when generating the request and not overridden one.
+   * This way virtual hosts can be tested using hosts.
    */
   hostHeader: string;
   _hostTestReg: RegExp;
-  auth: AuthStruct|null;
+  auth: ArcResponse.ResponseAuth;
   redirecting: boolean;
+  transportRequest: ArcRequest.TransportRequest;
+  redirects: Set<ArcResponse.Response>;
+  /**
+   * The response object being currently
+   */
+  currentResponse?: ArcResponse.Response;
+  /**
+   * The response headers parsed by the ARcHeaders class.
+   */
+  currentHeaders?: ArcHeaders;
+
+  _rawBody: Buffer;
   /**
    * Request timeout.
    */
@@ -84,14 +75,22 @@ export declare class BaseRequest extends EventEmitter {
   readonly followRedirects: boolean;
 
   on(event: 'beforeredirect', listener: (id: string, detail: object) => void): this;
-  on(event: 'error', listener: (error: Error, id: string, arcRequest: ArcRequest, response: ArcResponse) => void): this;
-  on(event: 'load', listener: (id: string, response: ArcResponse, arcRequest: ArcRequest) => void): this;
+  on(event: 'error', listener: (error: Error, id: string, transport: ArcRequest.TransportRequest, response: ArcResponse.ErrorResponse) => void): this;
+  on(event: 'load', listener: (id: string, response: ArcResponse.Response, transport: ArcRequest.TransportRequest) => void): this;
   on(event: 'loadstart', listener: (id: string) => void): this;
   on(event: 'firstbyte', listener: (id: string) => void): this;
   on(event: 'headersreceived', listener: (id: string, detail: object) => void): this;
   on(event: 'loadend', listener: (id: string) => void): this;
 
-  constructor(request: ArcRequest, options?: Options);
+  once(event: 'beforeredirect', listener: (id: string, detail: object) => void): this;
+  once(event: 'error', listener: (error: Error, id: string, transport: ArcRequest.TransportRequest, response: ArcResponse.ErrorResponse) => void): this;
+  once(event: 'load', listener: (id: string, response: ArcResponse.Response, transport: ArcRequest.TransportRequest) => void): this;
+  once(event: 'loadstart', listener: (id: string) => void): this;
+  once(event: 'firstbyte', listener: (id: string) => void): this;
+  once(event: 'headersreceived', listener: (id: string, detail: object) => void): this;
+  once(event: 'loadend', listener: (id: string) => void): this;
+  
+  constructor(request: ArcRequest.ArcBaseRequest, id: string, options?: Options);
 
   /**
    * Updates the `uri` property from current request URL
@@ -105,7 +104,7 @@ export declare class BaseRequest extends EventEmitter {
   __setupLogger(opts: object): object;
 
   /**
-   * Prints varning messages to the logger.
+   * Prints warning messages to the logger.
    */
   _printValidationWarnings(): void;
 
@@ -121,7 +120,7 @@ export declare class BaseRequest extends EventEmitter {
 
   /**
    * Aborts current request.
-   * It emitts `error` event
+   * It emits `error` event
    */
   abort(): void;
 
@@ -170,12 +169,18 @@ export declare class BaseRequest extends EventEmitter {
   _redirectRequest(options: RedirectOptions): Promise<void>;
 
   /**
+   * @param location The redirect location.
+   * @returns Redirect response object
+   */
+  _createRedirectResponse(location: string): Promise<ArcResponse.ResponseRedirect>;
+
+  /**
    * Create a `Response` object.
    *
    * @param opts Options to construct a response object.
    * @returns A response object.
    */
-  _createResponse(opts?: ResponsePublishOptions): Promise<ArcResponse>;
+  _createResponse(opts?: ResponsePublishOptions): Promise<ArcResponse.Response>;
 
   /**
    * Finishes the response with error message.
@@ -194,14 +199,20 @@ export declare class BaseRequest extends EventEmitter {
   _publishResponse(opts: ResponsePublishOptions): Promise<void>;
 
   /**
-   * Creats HAR 1.2 timings object from stats.
+   * Computes the request loading time from current stats.
+   * @return {number} The request loading time.
+   */
+  _computeLoadingTime(): number;
+
+  /**
+   * Creates HAR 1.2 timings object from stats.
    * @param stats Timings object
    */
-  _computeStats(stats: RequestStats): RequestTimings;
+  _computeStats(stats: RequestStats): ArcResponse.RequestTime;
 
   /**
    * Handles cookie exchange when redirecting the request.
-   * @param responseCookies Cookies received in the resposne
+   * @param responseCookies Cookies received in the response
    * @param location Redirect destination
    */
   _processRedirectCookies(responseCookies: string, location: string): void;
@@ -209,7 +220,7 @@ export declare class BaseRequest extends EventEmitter {
   /**
    * Checks certificate identity using TLS api.
    * @param host Request host name
-   * @param cert TLS's certificate info object
+   * @param cert TLS certificate info object
    */
   _checkServerIdentity(host: string, cert: Object): Error|undefined;
 
@@ -227,11 +238,11 @@ export declare class BaseRequest extends EventEmitter {
   _prepareHeaders(headers: ArcHeaders): void;
 
   /**
-   * Adds client certificate to the request configurtaion options.
+   * Adds client certificate to the request configuration options.
    *
    * @param cert List of certificate configurations.
    * @param options Request options. Cert agent options are
    * added to this object.
    */
-  _addClientCertificate(cert: ArcCertificate, options: ConnectionOptions): void;
+  _addClientCertificate(cert: ClientCertificate.ClientCertificate, options: ConnectionOptions): void;
 }

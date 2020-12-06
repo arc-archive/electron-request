@@ -2,42 +2,48 @@ import { Socket } from 'net';
 import { ArcHeaders } from './ArcHeaders';
 import { BaseRequest } from './BaseRequest';
 import { Options } from './RequestOptions';
-import { ArcRequest, LegacyAuth, NtlmAuthorization, NtlmAuthLegacy, ResponsePublishOptions } from './RequestTypes';
+import { ResponsePublishOptions } from './RequestTypes';
+import { ArcRequest, Authorization } from '@advanced-rest-client/arc-types';
 
 /**
  * Transport library for Advanced REST Client for node via Electron app.
  */
 export declare class SocketRequest extends BaseRequest {
   state: number;
+  rawHeaders?: Buffer;
+  chunkSize?: number;
+  _contentLength?: number;
+  _chunked?: boolean;
+
   /**
    * Constructs the request from ARC's request object
    *
    * @param request ARC's request object
    * @param options Optional. Request configuration options
    */
-  constructor(request: ArcRequest, options: Options);
+  constructor(request: ArcRequest.ArcBaseRequest, id: string, options?: Options);
 
   /**
-   * Status indicating thet expecting a ststus message.
+   * Status indicating expecting a status message.
    */
   static readonly STATUS: number;
 
   /**
-   * Status indicating thet expecting headers.
+   * Status indicating expecting headers.
    *
    * @default 1
    */
   static readonly HEADERS: number;
 
   /**
-   * Status indicating thet expecting a body message.
+   * Status indicating expecting a body message.
    *
    * @default 2
    */
   static readonly BODY: number;
 
   /**
-   * Status indicating thet the message has been read and
+   * Status indicating the message has been read and
    * connection is closing or closed.
    *
    * @default 0
@@ -81,7 +87,7 @@ export declare class SocketRequest extends BaseRequest {
   connect(): Promise<Socket>;
 
   /**
-   * Connects to a server and writtes a message using insecured connection.
+   * Connects to a server and writes a message using insecure connection.
    *
    * @param port A port number to connect to.
    * @param host A host name to connect to
@@ -90,7 +96,7 @@ export declare class SocketRequest extends BaseRequest {
   _connect(port: number, host: string): Promise<Socket>
 
   /**
-   * Connects to a server and writtes a message using secured connection.
+   * Connects to a server and writes a message using secured connection.
    *
    * @param port A port number to connect to.
    * @param host A host name to connect to
@@ -101,10 +107,11 @@ export declare class SocketRequest extends BaseRequest {
   /**
    * Prepares a full HTTP message body
    *
-   * @param buffer Optional, body `Buffer`
+   * @param headers The headers to append to the request.
+   * @param buffer The buffer with the message payload
    * @returns `Buffer` of a HTTP message
    */
-  _prepareMessage(buffer?: Buffer): Buffer;
+  _prepareMessage(headers: ArcHeaders, buffer?: Buffer): Buffer;
 
   /**
    * Tests if current connection is required to add `host` header.
@@ -126,7 +133,7 @@ export declare class SocketRequest extends BaseRequest {
    * Alters authorization header depending on the `auth` object
    * @param headers A headers object where to append headers if
    */
-  _handleLegacyAuth(headers: ArcHeaders, auth: LegacyAuth): void;
+  _handleLegacyAuth(headers: ArcHeaders, auth: Authorization.LegacyAuth): void;
 
   /**
    * Authorize the request with NTLM
@@ -134,7 +141,7 @@ export declare class SocketRequest extends BaseRequest {
    * @param headers A headers object where to append headers if
    * needed
    */
-  _authorizeNtlm(authData: NtlmAuthorization|NtlmAuthLegacy, headers: ArcHeaders): void;
+  _authorizeNtlm(authData: Authorization.NtlmAuthorization|Authorization.NtlmAuthLegacy, headers: ArcHeaders): void;
 
   /**
    * Add event listeners to existing socket.
@@ -184,14 +191,14 @@ export declare class SocketRequest extends BaseRequest {
   _processHeaders(data: Buffer): Buffer;
 
   /**
-   * Check the response headers and end the request if nescesary.
+   * Check the response headers and end the request if necessary.
    * @param data Current response data buffer
    */
   _postHeaders(data: Buffer): Buffer;
 
   /**
    * This function assumes that all headers has been read and it's
-   * just before changing the ststaus to BODY.
+   * just before changing the status to BODY.
    */
   _parseHeaders(array?: Buffer): void;
 

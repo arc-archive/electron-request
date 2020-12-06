@@ -15,7 +15,7 @@
   },
   "include": [
     "**/*.js",
-    "node_modules/@open-wc/**/*.js"
+    "node_modules/@open-wc/**/*.js", "index.d.ts"
   ],
   "exclude": [
     "node_modules/!(@open-wc)"

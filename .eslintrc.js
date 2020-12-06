@@ -42,7 +42,7 @@ module.exports = {
         devDependencies: ['**/test/**/*.js', '**/*.config.js', '**/*.conf.js'],
       },
     ],
-    // this is unescesary for node apps.
+    // this is unnecessary for node apps.
     'class-methods-use-this': 'off',
     'no-undef': 'error',
     'require-jsdoc': [
@@ -79,6 +79,15 @@ module.exports = {
     'no-return-await': 'error',
     'no-template-curly-in-string': 'error',
     'generator-star-spacing': 'off',
-    indent: ['error', 2],
+    'indent': ['error', 2, { SwitchCase: 1 }],
   },
+  overrides: [
+    {
+      files: ['test/**/*.js'],
+      rules: {
+        'require-jsdoc': 'off',
+        'no-empty-function': 'off',
+      },
+    },
+  ],
 };

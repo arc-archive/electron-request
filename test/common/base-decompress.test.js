@@ -1,9 +1,12 @@
+/* eslint-disable no-sync */
 const assert = require('chai').assert;
 const zlib = require('zlib');
 const { BaseRequest } = require('../../');
 const { ArcHeaders } = require('../../');
 
-describe('Decompression', function() {
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
+
+describe('Decompression', () => {
   function createDeflate(str) {
     return zlib.deflateSync(Buffer.from(str || 'deflate-string'));
   }
@@ -16,157 +19,114 @@ describe('Decompression', function() {
     return zlib.brotliCompressSync(Buffer.from(str || 'brotli-string'));
   }
 
-  const requestData = {
+  const id = 'test-id';
+  const requestData = /** @type ArcBaseRequest */ ({
     method: 'GET',
     url: 'https://domain.com',
-    id: 'test-id',
-  };
+  });
+
   describe('_inflate()', () => {
-    it('Returns a promise', () => {
-      const request = new BaseRequest(requestData);
-      const result = request._inflate(createDeflate());
-      assert.typeOf(result.then, 'function');
-      return result.then(() => {});
+    it('resolves to a Buffer', async () => {
+      const request = new BaseRequest(requestData, id);
+      const result = await request._inflate(createDeflate());
+      assert.equal(result.length, 14);
     });
 
-    it('Promise resolves to buffer', () => {
-      const request = new BaseRequest(requestData);
-      return request._inflate(createDeflate())
-          .then((result) => {
-            assert.equal(result.length, 14);
-          });
-    });
-
-    it('Buffer has original data', () => {
-      const request = new BaseRequest(requestData);
-      return request._inflate(createDeflate())
-          .then((result) => {
-            assert.equal(result.toString(), 'deflate-string');
-          });
+    it('Buffer has original data', async () => {
+      const request = new BaseRequest(requestData, id);
+      const result = await request._inflate(createDeflate());
+      assert.equal(result.toString(), 'deflate-string');
     });
   });
 
   describe('_gunzip()', () => {
-    it('Returns a promise', () => {
-      const request = new BaseRequest(requestData);
-      const result = request._gunzip(createGzip());
-      assert.typeOf(result.then, 'function');
-      return result.then(() => {});
+    it('Promise resolves to buffer', async () => {
+      const request = new BaseRequest(requestData, id);
+      const result = await request._gunzip(createGzip());
+      assert.equal(result.length, 11);
     });
 
-    it('Promise resolves to buffer', () => {
-      const request = new BaseRequest(requestData);
-      return request._gunzip(createGzip())
-          .then((result) => {
-            assert.equal(result.length, 11);
-          });
-    });
-
-    it('Buffer has original data', () => {
-      const request = new BaseRequest(requestData);
-      return request._gunzip(createGzip())
-          .then((result) => {
-            assert.equal(result.toString(), 'gzip-string');
-          });
+    it('Buffer has original data', async () => {
+      const request = new BaseRequest(requestData, id);
+      const result = await request._gunzip(createGzip());
+      assert.equal(result.toString(), 'gzip-string');
     });
   });
 
   describe('_brotli()', () => {
-    it('Returns a promise', () => {
-      const request = new BaseRequest(requestData);
-      const result = request._brotli(createBrotli());
-      assert.typeOf(result.then, 'function');
-      return result.then(() => {});
+    it('Promise resolves to buffer', async () => {
+      const request = new BaseRequest(requestData, id);
+      const result = await request._brotli(createBrotli());
+      assert.equal(result.length, 13);
     });
 
-    it('Promise resolves to buffer', () => {
-      const request = new BaseRequest(requestData);
-      return request._brotli(createBrotli())
-          .then((result) => {
-            assert.equal(result.length, 13);
-          });
-    });
-
-    it('Buffer has original data', () => {
-      const request = new BaseRequest(requestData);
-      return request._brotli(createBrotli())
-          .then((result) => {
-            assert.equal(result.toString(), 'brotli-string');
-          });
+    it('Buffer has original data', async () => {
+      const request = new BaseRequest(requestData, id);
+      const result = await request._brotli(createBrotli());
+      assert.equal(result.toString(), 'brotli-string');
     });
   });
 
   describe('_decompress()', () => {
-    it('Returns a promise', () => {
-      const request = new BaseRequest(requestData);
-      const result = request._decompress();
-      assert.typeOf(result.then, 'function');
-      return result.then(() => {});
+    it('returns undefined when no data', async () => {
+      const request = new BaseRequest(requestData, id);
+      const result = await request._decompress(undefined);
+      assert.isUndefined(result);
     });
 
-    it('Results to undefined when no data', () => {
-      const request = new BaseRequest(requestData);
-      return request._decompress()
-          .then((result) => {
-            assert.isUndefined(result);
-          });
-    });
-
-    it('Results to undefined when aborted', () => {
-      const request = new BaseRequest(requestData);
+    it('returns undefined when aborted', async () => {
+      const request = new BaseRequest(requestData, id);
       request.aborted = true;
-      return request._decompress(Buffer.from('test'))
-          .then((result) => {
-            assert.isUndefined(result);
-          });
+      const result = await request._decompress(Buffer.from('test'));
+      assert.isUndefined(result);
     });
 
-    it('Results to the same buffer when no content-encoding header', () => {
+    it('returns the same buffer when no content-encoding header', async () => {
       const b = Buffer.from('test');
-      const request = new BaseRequest(requestData);
-      request._response = {
-        _headers: new ArcHeaders(),
+      const request = new BaseRequest(requestData, id);
+      request.currentHeaders = new ArcHeaders();
+      request.currentResponse = {
+        status: 200,
+        loadingTime: 1,
       };
-      return request._decompress(b)
-          .then((result) => {
-            assert.equal(result.compare(b), 0);
-          });
+      const result = await request._decompress(b);
+      assert.equal(result.compare(b), 0);
     });
 
-    it('Decompresses deflate', () => {
+    it('decompresses deflate', async () => {
       const b = createDeflate();
-      const request = new BaseRequest(requestData);
-      request._response = {
-        _headers: new ArcHeaders('content-encoding: deflate'),
+      const request = new BaseRequest(requestData, id);
+      request.currentHeaders = new ArcHeaders('content-encoding: deflate');
+      request.currentResponse = {
+        status: 200,
+        loadingTime: 1,
       };
-      return request._decompress(b)
-          .then((result) => {
-            assert.equal(result.toString(), 'deflate-string');
-          });
+      const result = await request._decompress(b);
+      assert.equal(result.toString(), 'deflate-string');
     });
 
-    it('Decompresses gzip', () => {
+    it('decompresses gzip', async () => {
       const b = createGzip();
-      const request = new BaseRequest(requestData);
-      request._response = {
-        _headers: new ArcHeaders('content-encoding: gzip'),
+      const request = new BaseRequest(requestData, id);
+      request.currentHeaders = new ArcHeaders('content-encoding: gzip');
+      request.currentResponse = {
+        status: 200,
+        loadingTime: 1,
       };
-      return request._decompress(b)
-          .then((result) => {
-            assert.equal(result.toString(), 'gzip-string');
-          });
+      const result = await request._decompress(b);
+      assert.equal(result.toString(), 'gzip-string');
     });
 
-    it('Decompresses brotli', () => {
+    it('decompresses brotli', async () => {
       const b = createBrotli();
-      const request = new BaseRequest(requestData);
-      request._response = {
-        _headers: new ArcHeaders('content-encoding: br'),
+      const request = new BaseRequest(requestData, id);
+      request.currentHeaders = new ArcHeaders('content-encoding: br');
+      request.currentResponse = {
+        status: 200,
+        loadingTime: 1,
       };
-      return request._decompress(b)
-          .then((result) => {
-            assert.equal(result.toString(), 'brotli-string');
-          });
+      const result = await request._decompress(b);
+      assert.equal(result.toString(), 'brotli-string');
     });
   });
 });

@@ -1,21 +1,23 @@
 const { assert } = require('chai');
 const { BaseRequest } = require('../../');
 
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
+
 describe('BaseRequest uri', () => {
-  const requestData = {
+  const id = 'test-id';
+  const requestData = /** @type ArcBaseRequest */ ({
     method: 'GET',
     url: 'https://domain.com',
-    id: 'test-id',
-  };
+  });
 
   it('uri is parsed URL', () => {
-    const request = new BaseRequest(requestData);
+    const request = new BaseRequest(requestData, id);
     assert.typeOf(request.uri, 'object');
     assert.equal(request.uri.hostname, 'domain.com');
   });
 
   it('changes uri', () => {
-    const request = new BaseRequest(requestData);
+    const request = new BaseRequest(requestData, id);
     request._updateUrl('http://other.com');
     assert.typeOf(request.uri, 'object');
     assert.equal(request.uri.hostname, 'other.com');
@@ -23,7 +25,7 @@ describe('BaseRequest uri', () => {
 
   it('applies host rules', () => {
     const hosts = [{ from: 'domain.com', to: 'other.com' }];
-    const request = new BaseRequest(requestData, {
+    const request = new BaseRequest(requestData, id, {
       hosts,
     });
     assert.equal(request.uri.hostname, 'other.com');

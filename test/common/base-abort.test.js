@@ -1,70 +1,78 @@
 const assert = require('chai').assert;
 const net = require('net');
 const { BaseRequest } = require('../../');
+const ExpressServer = require('../express-api.js');
 
-describe('BaseRequest - abort', function() {
-  const requestData = {
-    method: 'GET',
-    url: 'localhost',
-    id: 'test-id',
-  };
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
 
-  function setupSocket(base) {
-    return new Promise((resolve, reject) => {
-      const socket = new net.Socket({
-        writable: true,
-      });
-      socket.connect(80, 'localhost', () => {
-        base.socket = socket;
-        resolve();
-      });
-      socket.on('error', (e) => {
-        reject(new Error('Unable to connect'));
-      });
+describe('BaseRequest', () => {
+  const expressPort = 8125;
+  before(async () => {
+    // await chunkedServer.startServer(httpPort, sslPort);
+    await ExpressServer.startServer(expressPort);
+  });
+
+  after(async () => {
+    // await chunkedServer.stopServer();
+    await ExpressServer.stopServer();
+  });
+
+  describe('Aborting the request', () => {
+    const id = 'test-id';
+    const requestData = /** @type ArcBaseRequest */ ({
+      method: 'GET',
+      url: `http://localhost:${expressPort}/v1/headers`,
     });
-  }
 
-  it('Sets aborted flag', () => {
-    const base = new BaseRequest(requestData);
-    base.abort();
-    assert.isTrue(base.aborted);
-  });
-
-  it('Destroys the socket', () => {
-    const base = new BaseRequest(requestData);
-    return setupSocket(base)
-        .then(() => {
-          base.abort();
-          assert.isUndefined(base.socket);
+    function setupSocket(base) {
+      return new Promise((resolve, reject) => {
+        const socket = new net.Socket({
+          writable: true,
         });
-  });
-
-  it('Removes destroyed socket', () => {
-    const base = new BaseRequest(requestData);
-    return setupSocket(base)
-        .then(() => {
-          base.socket.pause();
-          base.socket.destroy();
-          base.abort();
-          assert.isUndefined(base.socket);
+        socket.connect(expressPort, 'localhost', () => {
+          base.socket = socket;
+          resolve();
         });
-  });
-
-  it('_decompress() results to undefined', () => {
-    const request = new BaseRequest(requestData);
-    request.abort();
-    return request._decompress(Buffer.from('test'))
-        .then((result) => {
-          assert.isUndefined(result);
+        socket.on('error', (e) => {
+          reject(new Error('Unable to connect'));
         });
-  });
+      });
+    }
 
-  it('_createResponse() results to undefined', () => {
-    const request = new BaseRequest(requestData);
-    request.abort();
-    return request._createResponse()
-        .then((result) => {
-          assert.isUndefined(result);
-        });
+    it('sets aborted flag', () => {
+      const base = new BaseRequest(requestData, id);
+      base.abort();
+      assert.isTrue(base.aborted);
+    });
+
+    it('destroys the socket', async () => {
+      const base = new BaseRequest(requestData, id);
+      await setupSocket(base);
+      base.abort();
+      assert.isUndefined(base.socket);
+    });
+
+    it('removes destroyed socket', async () => {
+      const base = new BaseRequest(requestData, id);
+      await setupSocket(base);
+      base.socket.pause();
+      base.socket.destroy();
+      base.abort();
+      assert.isUndefined(base.socket);
+    });
+
+    it('_decompress() results to undefined', async () => {
+      const request = new BaseRequest(requestData, id);
+      request.abort();
+      const result = await request._decompress(Buffer.from('test'));
+      assert.isUndefined(result);
+    });
+
+    it('_createResponse() results to undefined', async () => {
+      const request = new BaseRequest(requestData, id);
+      request.abort();
+      const result = await request._createResponse();
+      assert.isUndefined(result);
+    });
   });
 });

@@ -1,31 +1,30 @@
 const assert = require('chai').assert;
 const { SocketRequest } = require('../../');
+const { logger } = require('../dummy-logger.js');
 
-global.performance = {
-  now: function() {
-    return Date.now();
-  },
-};
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
+/** @typedef {import('../../lib/RequestOptions').Options} Options */
 
-describe('Data buffer responses', function() {
-  const requests = [{
+describe('Data buffer responses', () => {
+  const requestId = 'test1';
+  const requests = /** @type ArcBaseRequest[] */ ([{
     url: `http://localhost:8080/api/endpoint?query=param`,
     method: 'GET',
     headers: 'Host: test.com\nContent-Length: 0',
     payload: 'abc',
-    id: 'test1',
-  }];
+  }]);
 
-  const opts = [{
+  const opts = /** @type Options[] */ ([{
     timeout: 50000,
     followRedirects: false,
     hosts: [{
       from: 'domain.com',
       to: 'test.com',
     }],
-  }];
+    logger,
+  }]);
 
-  describe('Issue #75', function() {
+  describe('Issue #75', () => {
     // https://github.com/advanced-rest-client/arc-electron/issues/75#issuecomment-399204512
     const parts = [
       Buffer.from([
@@ -58,31 +57,31 @@ describe('Data buffer responses', function() {
       'Server': 'Werkzeug/0.14.1 Python/2.7.14',
       'Date': 'Thu, 21 Jun 2018 18:30:51 GMT',
     };
-    let request;
-    beforeEach(function() {
-      request = new SocketRequest(requests[0], opts[0]);
+    let request = /** @type SocketRequest */ (null);
+    beforeEach(() => {
+      request = new SocketRequest(requests[0], requestId, opts[0]);
       // console.log(parts[0].toString());
       // console.log('=======================');
       // console.log(parts[1].toString());
     });
 
-    it('_processStatus returns data', function() {
+    it('_processStatus returns data', () => {
       const result = request._processStatus(parts[0]);
       assert.equal(result.compare(parts[2]), 0);
     });
 
-    it('Reads status line', function() {
+    it('Reads status line', () => {
       request._processSocketMessage(parts[0]);
-      assert.equal(request._response.status, 200, 'Status code is set');
-      assert.equal(request._response.statusText, 'OK', 'Status message is set');
+      assert.equal(request.currentResponse.status, 200, 'Status code is set');
+      assert.equal(request.currentResponse.statusText, 'OK', 'Status message is set');
     });
 
     it('Puts headers from part #1 after processing status to temp variable', () => {
       request._processHeaders(parts[2]);
-      assert.equal(request._rawHeaders.compare(parts[2]), 0);
+      assert.equal(request.rawHeaders.compare(parts[2]), 0);
     });
 
-    it('State is HEADERS after first part', function() {
+    it('State is HEADERS after first part', () => {
       request._processSocketMessage(parts[0]);
       assert.equal(request.state, SocketRequest.HEADERS);
     });
@@ -92,27 +91,27 @@ describe('Data buffer responses', function() {
       request._processSocketMessage(parts[1]);
     }
 
-    it('Processes both messages', function() {
+    it('Processes both messages', () => {
       processMessages();
       assert.equal(request.state, SocketRequest.DONE);
     });
 
-    it('Status is set', function() {
+    it('Status is set', () => {
       processMessages();
-      assert.equal(request._response.status, 200, 'Status code is set');
-      assert.equal(request._response.statusText, 'OK', 'Status message is set');
+      assert.equal(request.currentResponse.status, 200, 'Status code is set');
+      assert.equal(request.currentResponse.statusText, 'OK', 'Status message is set');
     });
 
-    it('Headers are set', function() {
+    it('Headers are set', () => {
       processMessages();
-      assert.typeOf(request._response.headers, 'string');
-      assert.typeOf(request._response._headers, 'object');
-      request._response._headers.forEach((value, name) => {
+      assert.typeOf(request.currentResponse.headers, 'string');
+      assert.typeOf(request.currentHeaders, 'object');
+      request.currentHeaders.forEach((value, name) => {
         assert.equal(headersMap[name], value);
       });
     });
 
-    it('Body is set', function() {
+    it('Body is set', () => {
       processMessages();
       assert.isTrue(request._rawBody instanceof Buffer);
     });

@@ -1,5 +1,8 @@
 const cors = require('cors');
 
+/** @typedef {import('express').Response} Response */
+/** @typedef {import('express').Request} Request */
+
 /**
  * A base class for API routes
  */
@@ -39,7 +42,7 @@ class BaseApi {
   }
 
   /**
-   * Sends error to the client in a standarized way.
+   * Sends error to the client in a standardized way.
    * @param {Response} res HTTP response object
    * @param {String} message Error message to send.
    * @param {Number=} [status=400] HTTP status code, default to 400.

@@ -2,84 +2,85 @@ const assert = require('chai').assert;
 const { RequestUtils } = require('../../');
 const { ArcHeaders } = require('../../');
 
-describe('RequestUtils tests', function() {
-  const requests = [{
-    id: 'r-2',
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
+
+describe('RequestUtils tests', () => {
+  const requests = /** @type ArcBaseRequest[] */ ([{
     url: `http://localhost:1234/api/endpoint?query=param`,
     method: 'POST',
     headers: 'content-type: text/plain',
     payload: Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74]),
   }, {
-    id: 'r-3',
     url: `http://localhost:1234/api/endpoint?query=param`,
     method: 'GET',
     headers: 'Host: test.com',
-  }];
-  describe('getPort()', function() {
-    it('Returns number when number is passed', function() {
+  }]);
+
+  describe('getPort()', () => {
+    it('Returns number when number is passed', () => {
       const result = RequestUtils.getPort(20);
       assert.equal(result, 20);
     });
 
-    it('Returns number when number is a string', function() {
+    it('Returns number when number is a string', () => {
       const result = RequestUtils.getPort('20');
       assert.equal(result, 20);
     });
 
-    it('Returns 443 port from the protocol', function() {
+    it('Returns 443 port from the protocol', () => {
       const result = RequestUtils.getPort(0, 'https:');
       assert.equal(result, 443);
     });
 
-    it('Returns 80 port from the protocol', function() {
+    it('Returns 80 port from the protocol', () => {
       const result = RequestUtils.getPort(undefined, 'http:');
       assert.equal(result, 80);
     });
   });
 
-  describe('getHostHeader()', function() {
-    it('Returns host with SSL port', function() {
+  describe('getHostHeader()', () => {
+    it('Returns host with SSL port', () => {
       const result = RequestUtils.getHostHeader('https://domain.com/path');
       assert.equal(result, 'domain.com');
     });
 
-    it('Returns host with http port', function() {
+    it('Returns host with http port', () => {
       const result = RequestUtils.getHostHeader('http://domain.com/path');
       assert.equal(result, 'domain.com');
     });
 
-    it('Respects existing port', function() {
+    it('Respects existing port', () => {
       const result = RequestUtils.getHostHeader('https://domain.com:123/path');
       assert.equal(result, 'domain.com:123');
     });
   });
 
-  describe('_addContentLength()', function() {
+  describe('_addContentLength()', () => {
     let headers;
     beforeEach(() => {
       headers = new ArcHeaders();
     });
 
-    it('Adds content length header', function() {
-      RequestUtils.addContentLength(requests[0].method, requests[0].payload, headers);
+    it('Adds content length header', () => {
+      RequestUtils.addContentLength(requests[0].method, /** @type Buffer */ (requests[0].payload), headers);
       assert.equal(headers.get('content-length'), 9);
     });
 
-    it('Do nothing for GET requests', function() {
-      RequestUtils.addContentLength(requests[1].method, requests[1].payload, headers);
+    it('Do nothing for GET requests', () => {
+      RequestUtils.addContentLength(requests[1].method, undefined, headers);
       assert.isFalse(headers.has('content-length'));
     });
   });
 
   describe('redirectOptions()', () => {
     [300, 304, 305].forEach((code) => {
-      it('Do not set redirect flag for ' + code, () => {
-        const result = RequestUtils.redirectOptions(code);
+      it(`does not set redirect flag for ${code}`, () => {
+        const result = RequestUtils.redirectOptions(code, 'GET');
         assert.isFalse(result.redirect);
       });
 
-      it('Do not set forceGet flag for ' + code, () => {
-        const result = RequestUtils.redirectOptions(code);
+      it(`does not set forceGet flag for ${code}`, () => {
+        const result = RequestUtils.redirectOptions(code, 'GET');
         assert.isFalse(result.forceGet);
       });
     });
@@ -119,24 +120,24 @@ describe('RequestUtils tests', function() {
 
   describe('isRedirectLoop()', () => {
     const url = 'https://domain.com';
-    it('Returns false when no redirects', () => {
-      const result = RequestUtils.isRedirectLoop(url);
+    it('returns false when no redirects', () => {
+      const result = RequestUtils.isRedirectLoop(url, undefined);
       assert.isFalse(result);
     });
 
-    it('Returns false when redirects is empty', () => {
+    it('returns false when redirects is empty', () => {
       const result = RequestUtils.isRedirectLoop(url, new Set());
       assert.isFalse(result);
     });
 
-    it('Returns false when url is not on the list', () => {
+    it('returns false when url is not on the list', () => {
       const result = RequestUtils.isRedirectLoop(url, new Set([{
         url: 'other.com',
       }]));
       assert.isFalse(result);
     });
 
-    it('Returns true when url is on the list', () => {
+    it('returns true when url is on the list', () => {
       const result = RequestUtils.isRedirectLoop(url, new Set([{
         url,
       }]));
@@ -145,9 +146,9 @@ describe('RequestUtils tests', function() {
   });
 
   describe('getRedirectLocation()', () => {
-    it('Returns the same valid url', () => {
+    it('returns the same valid url', () => {
       const url = 'https://domain.com/path?a=b';
-      const result = RequestUtils.getRedirectLocation(url);
+      const result = RequestUtils.getRedirectLocation(url, '');
       assert.equal(result, url);
     });
 

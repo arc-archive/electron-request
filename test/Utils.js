@@ -1,26 +1,36 @@
 /** @typedef {import('../main.js').SocketRequest} SocketRequest */
 /** @typedef {import('../main.js').ElectronRequest} ElectronRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.Response} ArcResponse */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.TransportRequest} TransportRequest */
+
+/**
+ * @typedef UntilResponseResult
+ * @property {string} id
+ * @property {ArcResponse} response
+ * @property {TransportRequest} transport
+ */
+
 /**
  * @param {SocketRequest|ElectronRequest} request
- * @return {Promise}
+ * @return {Promise<UntilResponseResult>}
  */
 async function untilResponse(request) {
   return new Promise((resolve, reject) => {
     request.on('error', (error) => {
       reject(error);
     });
-    request.on('load', (id, response, request) => {
+    request.on('load', (id, response, transport) => {
       resolve({
         id,
         response,
-        request,
+        transport,
       });
     });
   });
 }
 /**
  * @param {SocketRequest|ElectronRequest} request
- * @return {Promise}
+ * @return {Promise<any>}
  */
 async function untilBody(request) {
   return new Promise((resolve, reject) => {
@@ -30,7 +40,13 @@ async function untilBody(request) {
     request.on('load', (id, response) => {
       const { payload } = response;
       const body = payload.toString('utf8');
-      resolve(JSON.parse(body));
+      let parsed;
+      try {
+        parsed = JSON.parse(body);
+      } catch (e) {
+        parsed = body;
+      }
+      resolve(parsed);
     });
   });
 }

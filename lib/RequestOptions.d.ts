@@ -1,4 +1,5 @@
-import { HostRule, ArcCertificate } from './RequestTypes';
+import { ClientCertificate, HostRule } from "@advanced-rest-client/arc-types";
+
 
 export declare interface Logger {
   warn: Function;
@@ -32,7 +33,7 @@ export declare interface Options {
   /**
    * Hosts table.
    */
-  hosts?: HostRule[];
+  hosts?: HostRule.HostRule[];
   /**
    * A limit of characters to include into the `sentHttpMessage` property
    * of the request object. 0 to disable limit. Default to 2048.
@@ -54,11 +55,16 @@ export declare interface Options {
    * is set.
    * @default *\/*
    */
-  defaulAccept?: string;
+  defaultAccept?: string;
   /**
    * A certificate to use with the request.
    */
-  clientCertificate?: ArcCertificate;
+  clientCertificate?: ClientCertificate.ClientCertificate;
+  /**
+   * technically this is not an option for a request but it is kept here for
+   * compatibility with ARC config object.
+   */
+  nativeTransport?: boolean;
 }
 
 /**
@@ -87,7 +93,7 @@ export declare class RequestOptions {
   /**
    * Hosts table.
    */
-  hosts?: HostRule[];
+  hosts?: HostRule.HostRule[];
   /**
    * A limit of characters to include into the `sentHttpMessage` property
    * of the request object. 0 to disable limit. Default to 2048.
@@ -109,11 +115,11 @@ export declare class RequestOptions {
    * is set.
    * @default *\/*
    */
-  defaulAccept?: string;
+  defaultAccept?: string;
   /**
    * A certificate to use with the request.
    */
-  clientCertificate?: ArcCertificate;
+  clientCertificate?: ClientCertificate.ClientCertificate;
 
   /**
    * Map of options with data types
@@ -123,7 +129,7 @@ export declare class RequestOptions {
   constructor(opts?: Options);
 
   /**
-   * Processes user options. Removes options that has type misspatch.
+   * Processes user options. Removes options that has type mismatch.
    * @param opts User options
    * @returns Processed options.
    */
@@ -132,7 +138,7 @@ export declare class RequestOptions {
   /**
    * Validates user input options.
    * Sets `_validationErrors` and `_validationWarnings` arrays on this object
-   * conteining corresponing messages.
+   * containing the corresponding messages.
    *
    * @param userOpts User options to check.
    */

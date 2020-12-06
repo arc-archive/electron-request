@@ -1,77 +1,108 @@
 const assert = require('chai').assert;
 const { SocketRequest, ArcHeaders } = require('../../');
 const chunkedServer = require('../chunked-server');
+const ExpressServer = require('../express-api.js');
 const { logger } = require('../dummy-logger.js');
 
-global.performance = {
-  now: function() {
-    return Date.now();
-  },
-};
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
+/** @typedef {import('../../lib/RequestOptions').Options} Options */
 
-describe('Socket request basics', function() {
+describe('Socket request basics', () => {
   const httpPort = 8123;
   const sslPort = 8124;
+  const expressPort = 8125;
 
-  const requests = [{
-    id: 'r-1',
-    url: `http://localhost:${httpPort}/api/endpoint?query=param`,
-    method: 'GET',
-    headers: 'Host: test.com\nContent-Length: 0',
-    payload: 'abc',
-  }, {
-    id: 'r-2',
-    url: `http://localhost:${httpPort}/api/endpoint?query=param`,
-    method: 'POST',
-    headers: 'content-type: text/plain',
-    payload: Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74]),
-  }, {
-    id: 'r-3',
-    url: `http://localhost:${httpPort}/api/endpoint?query=param`,
-    method: 'POST',
-    headers: 'Host: test.com\nContent-Length: 12',
-    payload: Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74]),
-  }, {
-    id: 'r-4',
-    url: `http://localhost:${httpPort}/api/endpoint?query=param`,
-    method: 'GET',
-    headers: 'Host: test.com',
-    payload: '',
-  }, {
-    id: 'r-5',
-    url: `http://localhost:${httpPort}/api/endpoint?query=param`,
-    method: 'GET',
-    headers: 'Host: test.com',
-    auth: {
-      method: 'ntlm',
-      domain: 'domain.com',
-      username: 'test',
-      password: 'test',
+  const requestId = 'test1';
+  const requests = /** @type ArcBaseRequest[] */ ([
+    // 0
+    {
+      url: `http://localhost:${httpPort}/api/endpoint?query=param`,
+      method: 'GET',
+      headers: 'Host: test.com\nContent-Length: 0',
+      payload: 'abc',
     },
-  }, {
-    id: 'r-66',
-    url: 'http://localhost/get',
-    method: 'GET',
-    headers: 'x-test: true',
-  }, {
-    id: 'r-7',
-    url: 'http://localhost:8080/api/endpoint?query=param#access_token=test',
-    method: 'GET',
-    headers: 'Host: test.com',
-    auth: {
-      method: 'ntlm',
-      domain: 'domain.com',
-      username: 'test',
-      password: 'test',
+    // 1
+    {
+      url: `http://localhost:${httpPort}/api/endpoint?query=param`,
+      method: 'POST',
+      headers: 'content-type: text/plain',
+      payload: Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74]),
     },
-  }, {
-    id: 'r-8',
-    url: 'http://localhost/get?a=b&c=d',
-    method: 'GET',
-    headers: 'x-test: true\naccept: application/json',
-  }];
+    // 2
+    {
+      url: `http://localhost:${httpPort}/api/endpoint?query=param`,
+      method: 'POST',
+      headers: 'Host: test.com\nContent-Length: 12',
+      payload: Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74]),
+    },
+    // 3
+    {
+      url: `http://localhost:${httpPort}/api/endpoint?query=param`,
+      method: 'GET',
+      headers: 'Host: test.com',
+      payload: '',
+    },
+    // 4
+    {
+      url: `http://localhost:${httpPort}/api/endpoint?query=param`,
+      method: 'GET',
+      headers: 'Host: test.com',
+      auth: {
+        method: 'ntlm',
+        domain: 'domain.com',
+        username: 'test',
+        password: 'test',
+      },
+    },
+    // 5
+    {
+      url: `http://localhost:${expressPort}/v1/headers`,
+      method: 'GET',
+      headers: 'x-test: true',
+    },
+    // 6
+    {
+      url: 'http://localhost:8080/api/endpoint?query=param#access_token=test',
+      method: 'GET',
+      headers: 'Host: test.com',
+      auth: {
+        method: 'ntlm',
+        domain: 'domain.com',
+        username: 'test',
+        password: 'test',
+      },
+    },
+    // 7
+    {
+      url: `http://localhost:${expressPort}/v1/query-params?a=b&c=d`,
+      method: 'GET',
+    },
+    // 8
+    {
+      url: `http://localhost:${expressPort}/v1/headers`,
+      method: 'GET',
+      headers: 'x-test: true\naccept: application/json',
+    },
+    // 9
+    {
+      url: `http://localhost:${httpPort}/api/endpoint?query=param`,
+      method: 'GET',
+      headers: 'Host: test.com',
+      authorization: [
+        {
+          enabled: true,
+          type: 'ntlm',
+          config: {
+            domain: 'domain.com',
+            username: 'test',
+            password: 'test',
+          },
+        },
+      ],
+    },
+  ]);
 
-  const opts = [{
+  const opts = /** @type Options[] */ ([{
     timeout: 50000,
     followRedirects: false,
     hosts: [{
@@ -79,140 +110,121 @@ describe('Socket request basics', function() {
       to: 'test.com',
     }],
     logger,
-  }];
-  before(function() {
-    return chunkedServer.startServer(httpPort, sslPort);
+  }]);
+
+  before(async () => {
+    await chunkedServer.startServer(httpPort, sslPort);
+    await ExpressServer.startServer(expressPort);
   });
 
-  after(function() {
-    return chunkedServer.stopServer();
+  after(async () => {
+    await chunkedServer.stopServer();
+    await ExpressServer.stopServer();
   });
 
-  describe('Constructor', function() {
-    let request;
-    before(function() {
-      request = new SocketRequest(requests[0], opts[0]);
+  describe('constructor', () => {
+    let request = /** @type SocketRequest */ (null);
+    before(() => {
+      request = new SocketRequest(requests[0], requestId, opts[0]);
     });
 
-    it('arcRequest is set as a copy of the request object', function() {
+    it('arcRequest is set as a copy of the request object', () => {
       assert.ok(request.arcRequest, 'arcRequest is set');
       assert.isFalse(request.arcRequest === requests[0]);
     });
 
-    it('Sets the aborted property', function() {
+    it('Sets the aborted property', () => {
       assert.isFalse(request.aborted);
     });
 
-    it('Sets empty stats property', function() {
+    it('Sets empty stats property', () => {
       assert.typeOf(request.stats, 'object');
       assert.lengthOf(Object.keys(request.stats), 0);
     });
 
-    it('Sets state property', function() {
+    it('Sets state property', () => {
       assert.equal(request.state, 0);
     });
 
-    it('Sets timeout property', function() {
+    it('Sets timeout property', () => {
       assert.equal(request.timeout, opts[0].timeout);
     });
 
-    it('Timeout property cannot be changed', function() {
+    it('timeout property cannot be changed', () => {
+      // @ts-ignore
       request.timeout = 20;
       assert.notEqual(request.timeout, 20);
     });
 
-    it('Sets hosts property', function() {
+    it('Sets hosts property', () => {
       assert.typeOf(request.hosts, 'array');
       assert.lengthOf(request.hosts, 1);
     });
 
-    it('Sets uri property', function() {
+    it('Sets uri property', () => {
       assert.typeOf(request.uri, 'object');
     });
 
-    it('Sets hostHeader property', function() {
+    it('Sets hostHeader property', () => {
       assert.typeOf(request.hostHeader, 'string');
     });
   });
 
-  describe('_connect()', function() {
-    let request;
+  describe('_connect()', () => {
+    let request = /** @type SocketRequest */ (null);
     const host = 'localhost';
 
-    before(function() {
-      request = new SocketRequest(requests[0], opts[0]);
+    before(() => {
+      request = new SocketRequest(requests[0], requestId, opts[0]);
     });
 
-    it('Returns a promise', function() {
-      const result = request._connect(httpPort, host);
-      assert.typeOf(result, 'promise');
-      return result
-          .then((client) => client.destroy());
+    it('returns HTTP server client', async () => {
+      const client = await request._connect(httpPort, host);
+      assert.typeOf(client, 'object');
+      client.destroy();
     });
 
-    it('Resolved promise returns HTTP server client', function() {
-      return request._connect(httpPort, host)
-          .then((client) => {
-            assert.typeOf(client, 'object');
-            client.destroy();
-          });
-    });
-
-    it('Sets stats propty', function() {
-      return request._connect(httpPort, host)
-          .then((client) => {
-            client.destroy();
-            assert.typeOf(request.stats.connectionTime, 'number', 'connectionTime stat is set');
-            assert.typeOf(request.stats.lookupTime, 'number', 'lookupTime stat is set');
-          });
+    it('Sets stats property', async () => {
+      const client = await request._connect(httpPort, host);
+      client.destroy();
+      assert.typeOf(request.stats.connectionTime, 'number', 'connectionTime stat is set');
+      assert.typeOf(request.stats.lookupTime, 'number', 'lookupTime stat is set');
     });
   });
 
-  describe('_connectTls()', function() {
-    let request;
+  describe('_connectTls()', () => {
+    let request = /** @type SocketRequest */ (null);
     const host = 'localhost';
 
-    before(function() {
-      request = new SocketRequest(requests[0], opts[0]);
+    before(() => {
+      request = new SocketRequest(requests[0], requestId, opts[0]);
     });
 
-    it('Returns a promise', function() {
-      const result = request._connectTls(sslPort, host);
-      assert.typeOf(result, 'promise');
-      return result
-          .then((client) => client.destroy());
+    it('returns HTTP server client', async () => {
+      const client = await request._connectTls(sslPort, host);
+      assert.typeOf(client, 'object');
+      client.destroy();
     });
 
-    it('Resolved promise returns HTTP server client', function() {
-      return request._connectTls(sslPort, host)
-          .then((client) => {
-            assert.typeOf(client, 'object');
-            client.destroy();
-          });
-    });
-
-    it('Sets stats propty', function() {
-      return request._connectTls(sslPort, host)
-          .then((client) => {
-            client.destroy();
-            assert.typeOf(request.stats.connectionTime, 'number', 'connectionTime stat is set');
-            assert.typeOf(request.stats.lookupTime, 'number', 'lookupTime stat is set');
-            assert.typeOf(request.stats.secureStartTime, 'number', 'secureStartTime stat is set');
-            assert.typeOf(request.stats.secureConnectedTime, 'number',
-                'secureConnectedTime stat is set');
-          });
+    it('sets stats property', async () => {
+      const client = await request._connectTls(sslPort, host);
+      client.destroy();
+      assert.typeOf(request.stats.connectionTime, 'number', 'connectionTime stat is set');
+      assert.typeOf(request.stats.lookupTime, 'number', 'lookupTime stat is set');
+      assert.typeOf(request.stats.secureStartTime, 'number', 'secureStartTime stat is set');
+      assert.typeOf(request.stats.secureConnectedTime, 'number', 'secureConnectedTime stat is set');
     });
   });
 
-  describe('connect()', function() {
-    let request;
+  describe('connect()', () => {
+    let request = /** @type SocketRequest */ (null);
     let createdClient;
 
-    before(function() {
-      request = new SocketRequest(requests[5], opts[0]);
+    before(() => {
+      request = new SocketRequest(requests[5], requestId, opts[0]);
     });
 
-    afterEach(function() {
+    afterEach(() => {
       if (createdClient) {
         createdClient.end();
         createdClient.destroy();
@@ -220,173 +232,160 @@ describe('Socket request basics', function() {
       }
     });
 
-    it('Returns a promise', function() {
-      const result = request.connect();
-      assert.typeOf(result, 'promise');
-      return result.then((client) => {
-        createdClient = client;
-      });
+    it('returns HTTP server client', async () => {
+      const client = await request.connect();
+      assert.typeOf(client, 'object');
+      createdClient = client;
     });
 
-    it('Resolved promise returns HTTP server client', function() {
-      return request.connect()
-          .then((client) => {
-            assert.typeOf(client, 'object');
-            createdClient = client;
-          });
-    });
-
-    it('Sets socket propery', function() {
-      return request.connect()
-          .then((client) => {
-            assert.isTrue(request.socket === client);
-            createdClient = client;
-          });
+    it('sets the socket property', async () => {
+      const client = await request.connect();
+      assert.isTrue(request.socket === client);
+      createdClient = client;
     });
   });
 
-  describe('_authorizeNtlm()', function() {
+  describe('_authorizeNtlm()', () => {
     let headers;
-    let request;
+    let request = /** @type SocketRequest */ (null);
     beforeEach(() => {
       headers = new ArcHeaders();
-      request = new SocketRequest(requests[4], opts[0]);
+      request = new SocketRequest(requests[4], requestId, opts[0]);
     });
 
-    it('Adds authorization header', function() {
+    it('Adds authorization header', () => {
+      // @ts-ignore
       request._authorizeNtlm(requests[4].auth, headers);
       assert.isTrue(headers.has('Authorization'));
     });
 
-    it('Authorization is NTLM', function() {
+    it('Authorization is NTLM', () => {
+      // @ts-ignore
       request._authorizeNtlm(requests[4].auth, headers);
       const value = headers.get('Authorization');
       assert.equal(value.indexOf('NTLM '), 0);
     });
   });
 
-  describe('_prepareMessage()', function() {
-    it('Returns buffer', function() {
-      const request = new SocketRequest(requests[1], opts[0]);
-      const result = request._prepareMessage();
+  describe('_prepareMessage()', () => {
+    it('returns a buffer', () => {
+      const request = new SocketRequest(requests[1], requestId, opts[0]);
+      const result = request._prepareMessage(new ArcHeaders(''));
       assert.isTrue(result instanceof Buffer);
     });
 
-    it('Contains status message', function() {
-      const request = new SocketRequest(requests[1], opts[0]);
-      const result = request._prepareMessage().toString();
-      assert.equal(result.split('\n')[0],
-          'POST /api/endpoint?query=param HTTP/1.1\r');
+    it('contains the status message', () => {
+      const request = new SocketRequest(requests[1], requestId, opts[0]);
+      const result = request._prepareMessage(new ArcHeaders('')).toString();
+      assert.equal(result.split('\n')[0], 'POST /api/endpoint?query=param HTTP/1.1\r');
     });
 
-    it('Removes hash from the URL', function() {
-      const request = new SocketRequest(requests[6], opts[0]);
-      const result = request._prepareMessage().toString();
+    it('removes hash from the URL', () => {
+      const request = new SocketRequest(requests[6], requestId, opts[0]);
+      const result = request._prepareMessage(new ArcHeaders('')).toString();
       assert.equal(result.split('\n')[0],
-          'GET /api/endpoint?query=param HTTP/1.1\r');
+        'GET /api/endpoint?query=param HTTP/1.1\r');
     });
 
-    it('Adds Host header', function() {
-      const request = new SocketRequest(requests[1], opts[0]);
-      const result = request._prepareMessage().toString();
+    it('adds the Host header', () => {
+      const request = new SocketRequest(requests[1], requestId, opts[0]);
+      const result = request._prepareMessage(new ArcHeaders('')).toString();
       assert.equal(result.split('\n')[1], `Host: localhost:${httpPort}\r`);
     });
 
-    it('Adds the rest of the headers', function() {
-      const request = new SocketRequest(requests[1], opts[0]);
-      const result = request._prepareMessage().toString();
+    it('adds the passed headers', () => {
+      const request = new SocketRequest(requests[1], requestId, opts[0]);
+      const result = request._prepareMessage(new ArcHeaders('content-type: text/plain')).toString();
       assert.equal(result.split('\n')[2], 'content-type: text/plain\r');
     });
 
-    it('Adds empty line after headers', function() {
-      const request = new SocketRequest(requests[1], opts[0]);
-      const result = request._prepareMessage().toString();
+    it('adds empty line after headers', () => {
+      const request = new SocketRequest(requests[1], requestId, opts[0]);
+      const result = request._prepareMessage(new ArcHeaders('content-type: text/plain')).toString();
       assert.equal(result.split('\n')[3], '\r');
     });
 
-    it('Adds payload message', function() {
-      const request = new SocketRequest(requests[1], opts[0]);
-      const result = request._prepareMessage(requests[1].payload).toString();
+    it('adds payload message', () => {
+      const request = new SocketRequest(requests[1], requestId, opts[0]);
+      const headers = new ArcHeaders('content-type: text/plain');
+      const result = request._prepareMessage(headers, Buffer.from(requests[1].payload)).toString();
       assert.equal(result.split('\n')[4], 'test');
       assert.equal(result.split('\n')[5], 'test');
     });
   });
 
-  describe('prepareMessage()', function() {
-    it('Returns promise resolved to a Buffer', function() {
-      const request = new SocketRequest(requests[0], opts[0]);
-      return request.prepareMessage()
-          .then((result) => assert.isTrue(result instanceof Buffer));
+  describe('prepareMessage()', () => {
+    it('returns a Buffer', async () => {
+      const request = new SocketRequest(requests[0], requestId, opts[0]);
+      const result = await request.prepareMessage();
+      assert.isTrue(result instanceof Buffer);
     });
 
-    it('Ignores payload for GET requests', function() {
-      const request = new SocketRequest(requests[0], opts[0]);
-      return request.prepareMessage()
-          .then((result) => {
-            assert.lengthOf(result.toString().split('\n'), 5);
-          });
+    it('ignores payload for GET requests', async () => {
+      const request = new SocketRequest(requests[0], requestId, opts[0]);
+      const result = await request.prepareMessage();
+      assert.lengthOf(result.toString().split('\n'), 5);
     });
 
-    it('Creates message with payload', function() {
-      const request = new SocketRequest(requests[1], opts[0]);
-      return request.prepareMessage()
-          .then((result) => {
-            assert.lengthOf(result.toString().split('\n'), 7);
-          });
+    it('creates a message with the passed payload', async () => {
+      const request = new SocketRequest(requests[1], requestId, opts[0]);
+      const result = await request.prepareMessage();
+      assert.lengthOf(result.toString().split('\n'), 7);
     });
 
-    it('Adds NTLM request headers from payload processing', () => {
-      const request = new SocketRequest(requests[4], opts[0]);
-      return request.prepareMessage()
-          .then((result) => {
-            assert.equal(request.arcRequest.headers.indexOf('NTLM '), -1,
-                'Headers are not altered');
-            assert.isAbove(result.toString().indexOf('NTLM '), 0,
-                'Adds headers to body');
-          });
+    it('adds NTLM request headers from payload processing (legacy auth)', async () => {
+      const request = new SocketRequest(requests[4], requestId, opts[0]);
+      const result = await request.prepareMessage();
+      assert.equal(request.arcRequest.headers.indexOf('NTLM '), -1, 'Headers are not altered');
+      assert.isAbove(result.toString().indexOf('NTLM '), 0, 'Adds headers to body');
     });
 
-    it('Adds content length header', () => {
-      const request = new SocketRequest(requests[1], opts[0]);
-      return request.prepareMessage()
-          .then((result) => {
-            const search = request.arcRequest.headers.indexOf('content-length: 9');
-            assert.isAbove(search, 0);
-            assert.isAbove(result.toString().indexOf('content-length: 9'), 0);
-          });
+    it('adds NTLM request headers from payload processing (new API)', async () => {
+      const request = new SocketRequest(requests[9], requestId, opts[0]);
+      const result = await request.prepareMessage();
+      assert.equal(request.arcRequest.headers.indexOf('NTLM '), -1, 'Headers are not altered');
+      assert.isAbove(result.toString().indexOf('NTLM '), 0, 'Adds headers to body');
     });
 
-    it('Adds default headers', async () => {
-      const request = new SocketRequest(requests[1], {
+    it('adds content length header', async () => {
+      const request = new SocketRequest(requests[1], requestId, opts[0]);
+      const result = await request.prepareMessage();
+      const search = request.transportRequest.headers.indexOf('content-length: 9');
+      assert.isAbove(search, 0);
+      assert.isAbove(result.toString().indexOf('content-length: 9'), 0);
+    });
+
+    it('adds the default headers', async () => {
+      const request = new SocketRequest(requests[1], requestId, {
         defaultHeaders: true,
       });
       await request.prepareMessage();
-      assert.include(request.arcRequest.headers, 'user-agent: advanced-rest-client', 'user-agent is set');
-      assert.include(request.arcRequest.headers, 'accept: */*', 'accept is set');
+      assert.include(request.transportRequest.headers, 'user-agent: advanced-rest-client', 'user-agent is set');
+      assert.include(request.transportRequest.headers, 'accept: */*', 'accept is set');
     });
   });
 
-  describe('writeMessage()', function() {
+  describe('writeMessage()', () => {
     let message;
-    let request;
+    let request = /** @type SocketRequest */ (null);
     let createdClient;
 
-    before(function() {
+    before(() => {
       let str = 'GET /api/endpoint?query=param HTTP/1.1\r\n';
       str += 'Host: localhost:8123\r\n';
       str += '\r\n';
       message = Buffer.from(str);
     });
 
-    beforeEach(function() {
-      request = new SocketRequest(requests[0], opts[0]);
+    beforeEach(() => {
+      request = new SocketRequest(requests[0], requestId, opts[0]);
       return request.connect()
-          .then((client) => {
-            createdClient = client;
-          });
+        .then((client) => {
+          createdClient = client;
+        });
     });
 
-    afterEach(function() {
+    afterEach(() => {
       if (createdClient) {
         createdClient.end();
         createdClient.destroy();
@@ -394,37 +393,24 @@ describe('Socket request basics', function() {
       }
     });
 
-    it('Returns promise', function() {
-      const result = request.writeMessage(message);
-      assert.typeOf(result, 'promise', 'Returns a promise object');
-      return result.then((data) => assert.isUndefined(data,
-          'Promise resolves nothing'));
+    it('sets messageSent property on arcRequest', async () => {
+      await request.writeMessage(message);
+      assert.typeOf(request.transportRequest.httpMessage, 'string');
     });
 
-    it('Sets messageSent property on arcRequest', function() {
-      return request.writeMessage(message)
-          .then(() => {
-            assert.typeOf(request.arcRequest.sentHttpMessage, 'string');
-          });
+    it('sets messageStart property on stats object', async () => {
+      await request.writeMessage(message);
+      assert.typeOf(request.stats.messageStart, 'number');
     });
 
-    it('Sets messageStart property on stats object', function() {
-      return request.writeMessage(message)
-          .then(() => {
-            assert.typeOf(request.stats.messageStart, 'number');
-          });
+    it('Sets sentTime property on stats object', async () => {
+      await request.writeMessage(message);
+      assert.typeOf(request.stats.sentTime, 'number');
     });
 
-    it('Sets sentTime property on stats object', function() {
-      return request.writeMessage(message)
-          .then(() => {
-            assert.typeOf(request.stats.sentTime, 'number');
-          });
-    });
-
-    it('Emits loadstart event', function(done) {
-      request.once('loadstart', function(id) {
-        assert.equal(id, requests[0].id);
+    it('Emits loadstart event', (done) => {
+      request.once('loadstart', (id) => {
+        assert.equal(id, requestId);
         done();
       });
       request.once('error', (e) => done(e));
@@ -432,54 +418,56 @@ describe('Socket request basics', function() {
     });
   });
 
-  describe('_parseHeaders()', function() {
-    let request;
+  describe('_parseHeaders()', () => {
+    let request = /** @type SocketRequest */ (null);
     let headersStr;
     let headersBuf;
-    before(function() {
-      request = new SocketRequest(requests[1], opts[0]);
-      request._response = {};
+    before(() => {
+      request = new SocketRequest(requests[1], requestId, opts[0]);
+      // @ts-ignore
+      request.currentResponse = {};
       headersStr = 'Content-Type: application/test\r\n';
       headersStr += 'Content-Length: 123\r\n';
       headersStr += 'Transfer-Encoding: chunked\r\n';
       headersBuf = Buffer.from(headersStr);
     });
 
-    it('Sets headers property', function() {
+    it('Sets headers property', () => {
       request._parseHeaders(headersBuf);
-      assert.typeOf(request._response.headers, 'string');
+      assert.typeOf(request.currentResponse.headers, 'string');
     });
 
-    it('Headers contains 3 headers', function() {
+    it('Headers contains 3 headers', () => {
       request._parseHeaders(headersBuf);
       const list = {};
-      request._response._headers.forEach((value, name) => {
+      request.currentHeaders.forEach((value, name) => {
         list[name] = value;
       });
       assert.lengthOf(Object.keys(list), 3);
     });
 
-    it('Sets _contentLength property', function() {
+    it('Sets _contentLength property', () => {
       request._parseHeaders(headersBuf);
       assert.equal(request._contentLength, 123);
     });
 
-    it('Sets _chunked property', function() {
+    it('Sets _chunked property', () => {
       request._parseHeaders(headersBuf);
       assert.isTrue(request._chunked);
     });
 
-    it('Dispatches headersreceived event', function(done) {
-      request.once('headersreceived', function(id) {
-        assert.equal(id, requests[1].id);
+    it('Dispatches headersreceived event', (done) => {
+      request.once('headersreceived', (id) => {
+        assert.equal(id, requestId);
         done();
       });
       request.once('error', (e) => done(e));
       request._parseHeaders(headersBuf);
     });
 
-    it('The headersreceived event contains returnValue', function(done) {
-      request.once('headersreceived', function(id, detail) {
+    it('The headersreceived event contains returnValue', (done) => {
+      request.once('headersreceived', (id, detail) => {
+        // @ts-ignore
         assert.isTrue(detail.returnValue);
         done();
       });
@@ -487,8 +475,9 @@ describe('Socket request basics', function() {
       request._parseHeaders(headersBuf);
     });
 
-    it('The headersreceived event contains value property', function(done) {
-      request.once('headersreceived', function(id, detail) {
+    it('The headersreceived event contains value property', (done) => {
+      request.once('headersreceived', (id, detail) => {
+        // @ts-ignore
         assert.ok(detail.value);
         done();
       });
@@ -496,8 +485,9 @@ describe('Socket request basics', function() {
       request._parseHeaders(headersBuf);
     });
 
-    it('Aborts the request when the event is canceled', function() {
-      request.once('headersreceived', function(id, detail) {
+    it('Aborts the request when the event is canceled', () => {
+      request.once('headersreceived', (id, detail) => {
+        // @ts-ignore
         detail.returnValue = false;
       });
       request._parseHeaders(headersBuf);
@@ -505,100 +495,111 @@ describe('Socket request basics', function() {
     });
   });
 
-  describe('Events', function() {
-    let request;
-    beforeEach(function() {
-      request = new SocketRequest(requests[1], opts[0]);
+  describe('Events', () => {
+    let request = /** @type SocketRequest */ (null);
+    beforeEach(() => {
+      request = new SocketRequest(requests[1], requestId, opts[0]);
     });
 
-    it('Dispatches "loadstart" event', function(done) {
-      request = new SocketRequest(requests[0], opts[0]);
+    it('Dispatches "loadstart" event', (done) => {
+      request = new SocketRequest(requests[0], requestId, opts[0]);
       let called = false;
-      request.once('load', function() {
+      request.once('load', () => {
         assert.isTrue(called);
         done();
       });
-      request.once('loadstart', function(id) {
-        assert.equal(id, requests[0].id);
+      request.once('loadstart', (id) => {
+        assert.equal(id, requestId);
         called = true;
       });
-      request.once('error', function(error) {
+      request.once('error', (error) => {
         done(error);
       });
-      request.send().catch((e) => done(e));
+      request.send()
+        .catch((e) => done(e));
     });
 
-    it('Dispatches "firstbyte" event', function(done) {
-      request = new SocketRequest(requests[0], opts[0]);
+    it('Dispatches "firstbyte" event', (done) => {
+      request = new SocketRequest(requests[0], requestId, opts[0]);
       let called = false;
-      request.once('load', function() {
+      request.once('load', () => {
         assert.isTrue(called);
         done();
       });
-      request.once('firstbyte', function(id) {
-        assert.equal(id, requests[0].id);
+      request.once('firstbyte', (id) => {
+        assert.equal(id, requestId);
         called = true;
       });
-      request.once('error', function(error) {
+      request.once('error', (error) => {
         done(error);
       });
-      request.send().catch((e) => done(e));
+      request.send()
+        .catch((e) => done(e));
     });
 
-    it('Dispatches "loadend" event', function(done) {
-      request = new SocketRequest(requests[0], opts[0]);
+    it('Dispatches "loadend" event', (done) => {
+      request = new SocketRequest(requests[0], requestId, opts[0]);
       let called = false;
-      request.once('load', function() {
+      request.once('load', () => {
         assert.isTrue(called);
         done();
       });
-      request.once('loadend', function(id) {
-        assert.equal(id, requests[0].id);
+      request.once('loadend', (id) => {
+        assert.equal(id, requestId);
         called = true;
       });
-      request.once('error', function(error) {
+      request.once('error', (error) => {
         done(error);
       });
-      request.send().catch((e) => done(e));
+      request.send()
+        .catch((e) => done(e));
     });
 
-    it('Dispatches "headersreceived" event', function(done) {
-      request = new SocketRequest(requests[0], opts[0]);
+    it('Dispatches "headersreceived" event', (done) => {
+      request = new SocketRequest(requests[0], requestId, opts[0]);
       let called = false;
-      request.once('load', function() {
+      request.once('load', () => {
         assert.isTrue(called);
         done();
       });
-      request.once('headersreceived', function(id) {
-        assert.equal(id, requests[0].id);
+      request.once('headersreceived', (id) => {
+        assert.equal(id, requestId);
         called = true;
       });
-      request.once('error', function(error) {
+      request.once('error', (error) => {
         done(error);
       });
-      request.send().catch((e) => done(e));
+      request.send()
+        .catch((e) => done(e));
     });
   });
 
   describe('Sending request parameters', () => {
-    it('Sends query paramerters to the server', () => {
-      const request = new SocketRequest(requests[7], opts[0]);
+    it('sends query parameters to the server', (done) => {
+      const request = new SocketRequest(requests[7], requestId, opts[0]);
       request.once('load', (id, response) => {
         const payloadString = response.payload.toString();
         const payload = JSON.parse(payloadString);
-        assert.deepEqual(payload.args, { a: 'b', c: 'd' });
+        assert.deepEqual(payload.params.query, {
+          a: 'b',
+          c: 'd',
+        });
         done();
       });
       request.once('error', (error) => done(error));
       request.send().catch((e) => done(e));
     });
 
-    it('Sends headers to the server', () => {
-      const request = new SocketRequest(requests[7], opts[0]);
+    it('sends headers to the server', (done) => {
+      const request = new SocketRequest(requests[8], requestId, opts[0]);
       request.once('load', (id, response) => {
         const payloadString = response.payload.toString();
         const payload = JSON.parse(payloadString);
-        assert.deepEqual(payload.headers, { 'Host': 'localhost', 'X-Test': 'true' });
+        assert.deepEqual(payload.headers, {
+          'accept': 'application/json',
+          'host': `localhost:${expressPort}`,
+          'x-test': 'true',
+        });
         done();
       });
       request.once('error', (error) => done(error));

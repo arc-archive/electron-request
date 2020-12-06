@@ -1,3 +1,4 @@
+/* eslint-disable no-sync */
 const fs = require('fs');
 const https = require('https');
 const path = require('path');
@@ -9,13 +10,18 @@ const options = {
   ca: [fs.readFileSync('./test/cert-auth-server/server_cert.pem')],
 };
 
-const srvs = {
+/** @typedef {import('http').IncomingMessage} IncomingMessage */
+/** @typedef {import('http').ServerResponse} ServerResponse */
+/** @typedef {import('net').Socket} Socket */
+/** @typedef {import('tls').TLSSocket} TLSSocket */
+
+const servers = {
   srv: undefined,
 };
 let lastSocketKey = 0;
 const socketMap = {};
 /**
- * @param {Object} socket
+ * @param {Socket} socket
  */
 function handleConnection(socket) {
   const socketKey = ++lastSocketKey;
@@ -28,15 +34,15 @@ function handleConnection(socket) {
 /**
  * Callback for client connection.
  *
- * @param {[type]} req Node's request object
- * @param {Object} res Node's response object
+ * @param {IncomingMessage} req Node's request object
+ * @param {ServerResponse} res Node's response object
  */
 function connectedCallback(req, res) {
-  const cert = req.socket.getPeerCertificate();
-  console.log(cert);
+  const socket = /** @type TLSSocket */ (req.socket);
+  const cert = socket.getPeerCertificate();
   let status;
   let message;
-  if (req.client.authorized) {
+  if (socket.authorized) {
     status = 200;
     message = {
       authenticated: true,
@@ -67,12 +73,12 @@ function connectedCallback(req, res) {
  */
 function startHttpServer(httpPort) {
   return new Promise((resolve) => {
-    srvs.srv = https.createServer(options, connectedCallback);
-    srvs.srv.listen(httpPort, () => {
+    servers.srv = https.createServer(options, connectedCallback);
+    servers.srv.listen(httpPort, () => {
       // console.log(`Server is ready on port ${httpPort}`);
       resolve();
     });
-    srvs.srv.on('connection', handleConnection);
+    servers.srv.on('connection', handleConnection);
   });
 }
 
@@ -87,6 +93,6 @@ exports.stopServer = function() {
     socketMap[socketKey].destroy();
   });
   return new Promise((resolve) => {
-    srvs.srv.close(() => resolve());
+    servers.srv.close(() => resolve());
   });
 };

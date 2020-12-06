@@ -1,19 +1,24 @@
+/* eslint-disable no-sync */
 const server = require('../cert-auth-server');
 const { SocketRequest } = require('../../');
 const fs = require('fs');
 const { assert } = require('chai');
 const { logger } = require('../dummy-logger.js');
 
-describe('SocketRequest', function() {
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
+/** @typedef {import('../../lib/RequestOptions').Options} Options */
+
+describe('SocketRequest', () => {
   /**
    * Promise wrapper for the request.
-   * @param {Object} request
-   * @param {Object} options
+   * @param {ArcBaseRequest} request
+   * @param {string} id
+   * @param {Options} options
    * @return {Promise}
    */
-  async function untilResponse(request, options) {
+  async function untilResponse(request, id, options) {
     return new Promise((resolve, reject) => {
-      const instance = new SocketRequest(request, options);
+      const instance = new SocketRequest(request, id, options);
       instance.once('load', (id, response) => {
         resolve({
           id,
@@ -38,15 +43,14 @@ describe('SocketRequest', function() {
 
   describe('Client certificate', () => {
     const httpPort = 8345;
-
-    const requests = [{
+    const requestId = 'test1';
+    const requests = /** @type ArcBaseRequest[] */ ([{
       url: `https://localhost:${httpPort}/`,
       method: 'GET',
       headers: 'host: localhost',
-      id: 'test1',
-    }];
+    }]);
 
-    const opts = [{
+    const opts = /** @type Options[] */ ([{
       timeout: 10000,
       logger,
     }, {
@@ -90,7 +94,7 @@ describe('SocketRequest', function() {
         type: 'p12',
       },
       logger,
-    }];
+    }]);
 
     before(async () => {
       await server.startServer(httpPort);
@@ -101,14 +105,14 @@ describe('SocketRequest', function() {
     });
 
     it('makes connection without certificate', async () => {
-      const data = await untilResponse(requests[0], opts[0]);
+      const data = await untilResponse(requests[0], requestId, opts[0]);
       const payloadString = data.response.payload.toString();
       const payload = JSON.parse(payloadString);
       assert.isFalse(payload.authenticated);
     });
 
     it('makes a connection with p12 client certificate', async () => {
-      const data = await untilResponse(requests[0], opts[2]);
+      const data = await untilResponse(requests[0], requestId, opts[2]);
       const payloadString = data.response.payload.toString();
       const payload = JSON.parse(payloadString);
       assert.isTrue(payload.authenticated);
@@ -117,7 +121,7 @@ describe('SocketRequest', function() {
     });
 
     it('makes a connection with p12 client certificate and password', async () => {
-      const data = await untilResponse(requests[0], opts[3]);
+      const data = await untilResponse(requests[0], requestId, opts[3]);
       const payloadString = data.response.payload.toString();
       const payload = JSON.parse(payloadString);
       assert.isTrue(payload.authenticated);
@@ -126,7 +130,7 @@ describe('SocketRequest', function() {
     });
 
     it('ignores untrusted valid certificates', async () => {
-      const data = await untilResponse(requests[0], opts[4]);
+      const data = await untilResponse(requests[0], requestId, opts[4]);
       const payloadString = data.response.payload.toString();
       const payload = JSON.parse(payloadString);
       assert.isFalse(payload.authenticated);
@@ -136,7 +140,7 @@ describe('SocketRequest', function() {
     });
 
     it('makes a connection with pem client certificate', async () => {
-      const data = await untilResponse(requests[0], opts[1]);
+      const data = await untilResponse(requests[0], requestId, opts[1]);
       const payloadString = data.response.payload.toString();
       const payload = JSON.parse(payloadString);
       assert.isTrue(payload.authenticated);
@@ -156,9 +160,10 @@ describe('SocketRequest', function() {
             passphrase: '',
           },
           type: 'p12',
+          name: 'test',
         },
       };
-      const data = await untilResponse(requests[0], options);
+      const data = await untilResponse(requests[0], requestId, options);
       const payloadString = data.response.payload.toString();
       const payload = JSON.parse(payloadString);
       assert.isTrue(payload.authenticated);

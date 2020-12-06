@@ -1,8 +1,10 @@
 const assert = require('chai').assert;
 const { HostRulesEval } = require('../../');
 
-describe('HostRulesEval tests', function() {
-  describe('_createRuleRe()', function() {
+/** @typedef {import('@advanced-rest-client/arc-types').HostRule.HostRule} HostRule */
+
+describe('HostRulesEval tests', () => {
+  describe('_createRuleRe()', () => {
     it('Creates a regular expression', () => {
       const result = HostRulesEval._createRuleRe('test');
       assert.typeOf(result, 'RegExp');
@@ -14,27 +16,30 @@ describe('HostRulesEval tests', function() {
       assert.equal(result.source, input);
     });
 
-    it('Replaces asterix with regular expression group input', () => {
+    it('Replaces asterisk with regular expression group input', () => {
       const result = HostRulesEval._createRuleRe('test*input');
       assert.equal(result.source, 'test(.*)input');
     });
 
-    it('Replaces asterixes globally', () => {
+    it('Replaces asterisks globally', () => {
       const result = HostRulesEval._createRuleRe('test*input*');
       assert.equal(result.source, 'test(.*)input(.*)');
     });
   });
 
-  describe('_evaluateRule()', function() {
-    it('Returns undefined when rule is not defuned', function() {
+  describe('_evaluateRule()', () => {
+    it('Returns undefined when rule is not defined', () => {
       const url = 'test';
-      assert.isUndefined(HostRulesEval._evaluateRule(url));
+      assert.isUndefined(HostRulesEval._evaluateRule(url, undefined));
+      // @ts-ignore
       assert.isUndefined(HostRulesEval._evaluateRule(url, {}));
+      // @ts-ignore
       assert.isUndefined(HostRulesEval._evaluateRule(url, { from: 'from' }));
+      // @ts-ignore
       assert.isUndefined(HostRulesEval._evaluateRule(url, { to: 'to' }));
     });
 
-    it('Returns undefined if the rule does not match', function() {
+    it('Returns undefined if the rule does not match', () => {
       const url = 'abc';
       const rule = {
         from: 'xyz',
@@ -43,7 +48,7 @@ describe('HostRulesEval tests', function() {
       assert.isUndefined(HostRulesEval._evaluateRule(url, rule));
     });
 
-    it('Alters the url', function() {
+    it('Alters the url', () => {
       const url = 'abc';
       const rule = {
         from: 'a',
@@ -53,7 +58,7 @@ describe('HostRulesEval tests', function() {
       assert.equal(result, 'testbc');
     });
 
-    it('Alters the url globally', function() {
+    it('Alters the url globally', () => {
       const url = 'abca';
       const rule = {
         from: 'a',
@@ -63,7 +68,7 @@ describe('HostRulesEval tests', function() {
       assert.equal(result, 'testbctest');
     });
 
-    it('Includes asterics', function() {
+    it('Includes asterisk', () => {
       const url = 'abca';
       const rule = {
         from: 'abc*',
@@ -80,17 +85,17 @@ describe('HostRulesEval tests', function() {
       ['https://a123.domain.com/api', 'https://secured/api', { from: 'https://*/', to: 'https://secured/' }],
       ['https://var.domain.com/var', 'https://abc.domain.com/abc', { from: 'var', to: 'abc' }],
     ].forEach((item, index) => {
-      it(`Evaluates test #${index}`, function() {
-        const result = HostRulesEval._evaluateRule(item[0], item[2]);
+      it(`Evaluates test #${index}`, () => {
+        const result = HostRulesEval._evaluateRule(String(item[0]), /** @type HostRule */ (item[2]));
         assert.equal(result, item[1]);
       });
     });
   });
 
-  describe('applyHosts()', function() {
+  describe('applyHosts()', () => {
     const url = 'https://api.host.domain.com/path?query=param';
     it('Returns the URL if there is no rules', () => {
-      assert.equal(HostRulesEval.applyHosts(url), url);
+      assert.equal(HostRulesEval.applyHosts(url, undefined), url);
     });
 
     it('Returns the URL if rules is empty', () => {

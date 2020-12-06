@@ -1,12 +1,14 @@
 const assert = require('chai').assert;
 const { ElectronRequest } = require('../../');
 
-describe('Responses test', function() {
-  const requests = [{
-    id: 'r-1',
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
+
+describe('Responses test', () => {
+  const id = 'r-1';
+  const requests = /** @type ArcBaseRequest[] */ ([{
     url: 'http://localhost/image',
     method: 'GET',
-  }];
+  }]);
   const opts = [{
     validateCertificates: false,
   }, {
@@ -22,12 +24,11 @@ describe('Responses test', function() {
     // ['pinned', 'https://pinning-test.badssl.com/']
   ].forEach((item, index) => {
     const [name, url] = item;
-    it('Reads certificate: ' + name, (done) => {
+    it(`reads certificate: ${name}`, (done) => {
       const request = new ElectronRequest({
-        id: 'r-' + index,
         url,
         method: 'GET',
-      }, opts[0]);
+      }, `r-${index}`, opts[0]);
       request.once('load', () => done());
       request.once('error', (err) => done(err));
       request.send().catch((e) => done(e));
@@ -35,10 +36,9 @@ describe('Responses test', function() {
 
     it(`Rejects ${name} cert with validation enabled`, (done) => {
       const request = new ElectronRequest({
-        id: 'r-' + index,
         url,
         method: 'GET',
-      }, opts[1]);
+      }, `r-${index}`, opts[1]);
       request.once('load', () => {
         done(new Error('Should not load'));
       });
@@ -47,11 +47,11 @@ describe('Responses test', function() {
     });
   });
 
-  it('Error has ID', function(done) {
-    const request = new ElectronRequest(requests[0], opts[1]);
+  it('has the id on the error', (done) => {
+    const request = new ElectronRequest(requests[0], id, opts[1]);
     request.once('load', () => done());
-    request.once('error', (err, id) => {
-      assert.equal(id, requests[0].id);
+    request.once('error', (err, rid) => {
+      assert.equal(rid, id);
       done();
     });
     request.send().catch((e) => done(e));

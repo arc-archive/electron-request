@@ -1,18 +1,23 @@
+/* eslint-disable no-sync */
 const server = require('../cert-auth-server');
 const { ElectronRequest } = require('../../');
 const fs = require('fs');
 const { assert } = require('chai');
 
-describe('ElectronRequest', function() {
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
+/** @typedef {import('../../lib/RequestOptions').Options} Options */
+
+describe('ElectronRequest', () => {
   /**
    * Promise wrapper for the request.
    * @param {Object} request
+   * @param {string} id
    * @param {Object} options
    * @return {Promise}
    */
-  async function untilResponse(request, options) {
+  async function untilResponse(request, id, options) {
     return new Promise((resolve, reject) => {
-      const instance = new ElectronRequest(request, options);
+      const instance = new ElectronRequest(request, id, options);
       instance.once('load', (id, response) => {
         resolve({
           id,
@@ -27,7 +32,7 @@ describe('ElectronRequest', function() {
   }
   /**
    * Convents string to Uint8Array.
-   * @param {String} str
+   * @param {string} str
    * @return {Uint8Array}
    */
   function str2bf(str) {
@@ -37,15 +42,14 @@ describe('ElectronRequest', function() {
 
   describe('Client certificate', () => {
     const httpPort = 8345;
-
-    const requests = [{
+    const id = 'test1';
+    const requests = /** @type ArcBaseRequest[] */ ([{
       url: `https://localhost:${httpPort}/`,
       method: 'GET',
       headers: 'host: localhost',
-      id: 'test1',
-    }];
+    }]);
 
-    const opts = [{
+    const opts = /** @type Options[] */ ([{
       timeout: 10000,
     }, {
       clientCertificate: {
@@ -84,7 +88,7 @@ describe('ElectronRequest', function() {
         },
         type: 'p12',
       },
-    }];
+    }]);
 
     before(async () => {
       await server.startServer(httpPort);
@@ -95,14 +99,14 @@ describe('ElectronRequest', function() {
     });
 
     it('makes connection without certificate', async () => {
-      const data = await untilResponse(requests[0], opts[0]);
+      const data = await untilResponse(requests[0], id, opts[0]);
       const payloadString = data.response.payload.toString();
       const payload = JSON.parse(payloadString);
       assert.isFalse(payload.authenticated);
     });
 
     it('makes a connection with p12 client certificate', async () => {
-      const data = await untilResponse(requests[0], opts[2]);
+      const data = await untilResponse(requests[0], id, opts[2]);
       const payloadString = data.response.payload.toString();
       const payload = JSON.parse(payloadString);
       assert.isTrue(payload.authenticated);
@@ -111,7 +115,7 @@ describe('ElectronRequest', function() {
     });
 
     it('makes a connection with p12 client certificate and password', async () => {
-      const data = await untilResponse(requests[0], opts[3]);
+      const data = await untilResponse(requests[0], id, opts[3]);
       const payloadString = data.response.payload.toString();
       const payload = JSON.parse(payloadString);
       assert.isTrue(payload.authenticated);
@@ -120,7 +124,7 @@ describe('ElectronRequest', function() {
     });
 
     it('ignores untrusted valid certificates', async () => {
-      const data = await untilResponse(requests[0], opts[4]);
+      const data = await untilResponse(requests[0], id, opts[4]);
       const payloadString = data.response.payload.toString();
       const payload = JSON.parse(payloadString);
       assert.isFalse(payload.authenticated);
@@ -130,7 +134,7 @@ describe('ElectronRequest', function() {
     });
 
     it('makes a connection with pem client certificate', async () => {
-      const data = await untilResponse(requests[0], opts[1]);
+      const data = await untilResponse(requests[0], id, opts[1]);
       const payloadString = data.response.payload.toString();
       const payload = JSON.parse(payloadString);
       assert.isTrue(payload.authenticated);
@@ -151,7 +155,7 @@ describe('ElectronRequest', function() {
           type: 'p12',
         },
       };
-      const data = await untilResponse(requests[0], options);
+      const data = await untilResponse(requests[0], id, options);
       const payloadString = data.response.payload.toString();
       const payload = JSON.parse(payloadString);
       assert.isTrue(payload.authenticated);
