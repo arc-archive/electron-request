@@ -146,16 +146,6 @@ describe('Socket request basics', () => {
       assert.equal(request.state, 0);
     });
 
-    it('Sets timeout property', () => {
-      assert.equal(request.timeout, opts[0].timeout);
-    });
-
-    it('timeout property cannot be changed', () => {
-      // @ts-ignore
-      request.timeout = 20;
-      assert.notEqual(request.timeout, 20);
-    });
-
     it('Sets hosts property', () => {
       assert.typeOf(request.hosts, 'array');
       assert.lengthOf(request.hosts, 1);

@@ -1,6 +1,6 @@
 {
   "name": "@advanced-rest-client/electron-request",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "The request engine for Advanced REST Client - Electron engine",
   "main": "index.js",
   "module": "main.js",
