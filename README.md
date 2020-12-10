@@ -33,17 +33,16 @@ const opts = {
   hosts: [{from: 'domain.com', to: 'other.com'}],
   followRedirects: true
 };
-
+const id = 'some-id';
 const request = {
-  id: 'some-id',
   url: 'http://api.domain.com',
   method: 'GET',
   headers: 'x-test: true'
 };
 
-const connection = new SocketRequest(request, opts);
-request.on('load', (response, request) => {});
-request.on('error', (error) => {});
+const connection = new SocketRequest(request, id, opts);
+request.on('load', (id, response, transport) => {});
+request.on('error', (error, id, transport, response) => {});
 try {
   await connection.send();
   console.log('Request message sent.');
@@ -52,6 +51,8 @@ try {
   console.error('Connection error', cause);
 }
 ```
+
+The `transport` is defined in `@advanced-rest-client/arc-types` as `TransportRequest` interface and describes the final message that has been sent to the endpoint. This includes all transformations applied to the request like added headers.
 
 ### Native request
 
@@ -65,17 +66,16 @@ const opts = {
   hosts: [{from: 'domain.com', to: 'other.com'}],
   followRedirects: true
 };
-
+const id = 'some-id';
 const request = {
-  id: 'some-id',
   url: 'http://api.domain.com',
   method: 'GET',
   headers: 'x-test: true'
 };
 
-const connection = new ElectronRequest(request, opts);
-request.on('load', (id, response, request) => {});
-request.on('error', (error, id) => {});
+const connection = new ElectronRequest(request, id, opts);
+request.on('load', (id, response, transport) => {});
+request.on('error', (error, id, transport, response) => {});
 try {
   await connection.send();
   console.log('Request message sent.');
