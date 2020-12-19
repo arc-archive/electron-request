@@ -133,4 +133,32 @@ describe('Electron request', () => {
       request.send();
     });
   });
+
+  describe('Request size', () => {
+    it('has the request size value', (done) => {
+      const request = new ElectronRequest({
+        url: `http://localhost:${expressPort}/v1/get`,
+        method: 'GET',
+      }, 'test');
+      request.once('load', (id, response) => {
+        assert.equal(response.size.request, 65);
+        done();
+      });
+      request.once('error', (err) => done(err));
+      request.send();
+    });
+
+    it('has the response size value', (done) => {
+      const request = new ElectronRequest({
+        url: `http://localhost:${expressPort}/v1/get`,
+        method: 'GET',
+      }, 'test');
+      request.once('load', (id, response) => {
+        assert.equal(response.size.response, 69);
+        done();
+      });
+      request.once('error', (err) => done(err));
+      request.send();
+    });
+  });
 });

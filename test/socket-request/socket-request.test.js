@@ -597,4 +597,36 @@ describe('Socket request basics', () => {
       request.send().catch((e) => done(e));
     });
   });
+
+  describe('Request size', () => {
+    it('has the request size value', (done) => {
+      const request = new SocketRequest(requests[8], requestId, opts[0]);
+      request.once('load', (id, response) => {
+        try {
+          assert.equal(response.size.request, 90);
+        } catch (e) {
+          done(e);
+          return;
+        }
+        done();
+      });
+      request.once('error', (error) => done(error));
+      request.send().catch((e) => done(e));
+    });
+
+    it('has the response size value', (done) => {
+      const request = new SocketRequest(requests[8], requestId, opts[0]);
+      request.once('load', (id, response) => {
+        try {
+          assert.equal(response.size.response, 81);
+        } catch (e) {
+          done(e);
+          return;
+        }
+        done();
+      });
+      request.once('error', (error) => done(error));
+      request.send().catch((e) => done(e));
+    });
+  });
 });
