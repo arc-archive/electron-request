@@ -1,6 +1,6 @@
 const assert = require('chai').assert;
+const { ArcHeaders } = require('@advanced-rest-client/arc-headers/src/ArcHeaders.js');
 const { ElectronRequest } = require('../../');
-const { ArcHeaders } = require('../../lib/ArcHeaders');
 const ExpressServer = require('../express-api.js');
 
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */

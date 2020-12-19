@@ -1,6 +1,6 @@
 const assert = require('chai').assert;
+const { ArcHeaders } = require('@advanced-rest-client/arc-headers/src/ArcHeaders.js');
 const { RequestUtils } = require('../../');
-const { ArcHeaders } = require('../../');
 
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
 

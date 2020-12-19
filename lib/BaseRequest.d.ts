@@ -3,7 +3,7 @@ import { ConnectionOptions } from 'tls';
 import { Socket } from 'net';
 import { EventEmitter } from 'events';
 import { RequestOptions, Logger } from './RequestOptions';
-import { ArcHeaders } from './ArcHeaders';
+import { ArcHeaders } from '@advanced-rest-client/arc-headers/src/ArcHeaders';
 import { Options } from './RequestOptions';
 import { RedirectOptions } from './RequestUtils';
 import { ResponsePublishOptions, RequestStats } from './RequestTypes';

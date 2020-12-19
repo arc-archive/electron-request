@@ -1,6 +1,6 @@
 const assert = require('chai').assert;
+const { ArcHeaders } = require('@advanced-rest-client/arc-headers/src/ArcHeaders.js');
 const { PayloadSupport } = require('../../');
-const { ArcHeaders } = require('../../');
 
 describe('PayloadSupport tests', () => {
   describe('blob2buffer()', () => {

@@ -1,8 +1,8 @@
 /* eslint-disable no-sync */
 const assert = require('chai').assert;
 const zlib = require('zlib');
+const { ArcHeaders } = require('@advanced-rest-client/arc-headers/src/ArcHeaders.js');
 const { BaseRequest } = require('../../');
-const { ArcHeaders } = require('../../');
 
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
 

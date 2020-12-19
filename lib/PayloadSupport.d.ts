@@ -1,7 +1,7 @@
 /** @typedef {import('./arc-headers.js').ArcHeaders} ArcHeaders */
-import { ArcHeaders } from './ArcHeaders';
+import { ArcHeaders } from '@advanced-rest-client/arc-headers/src/ArcHeaders';
 /**
- * A class containning static helper methods to deal with Payload
+ * A class containing static helper methods to deal with Payload
  * transformations
  */
 export declare class PayloadSupport {

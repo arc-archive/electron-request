@@ -1,5 +1,6 @@
 const { assert } = require('chai');
-const { BaseRequest, ArcHeaders } = require('../../');
+const { ArcHeaders } = require('@advanced-rest-client/arc-headers/src/ArcHeaders.js');
+const { BaseRequest } = require('../../');
 
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
 /** @typedef {import('../../lib/RequestOptions').Options} Options */

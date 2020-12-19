@@ -1,4 +1,4 @@
-import { ArcHeaders } from './ArcHeaders';
+import { ArcHeaders } from '@advanced-rest-client/arc-headers/src/ArcHeaders';
 
 export declare interface RedirectOptions {
   /**

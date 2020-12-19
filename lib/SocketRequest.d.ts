@@ -1,5 +1,5 @@
 import { Socket } from 'net';
-import { ArcHeaders } from './ArcHeaders';
+import { ArcHeaders } from '@advanced-rest-client/arc-headers/src/ArcHeaders';
 import { BaseRequest } from './BaseRequest';
 import { Options } from './RequestOptions';
 import { ResponsePublishOptions } from './RequestTypes';

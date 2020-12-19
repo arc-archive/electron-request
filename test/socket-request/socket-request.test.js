@@ -1,5 +1,6 @@
 const assert = require('chai').assert;
-const { SocketRequest, ArcHeaders } = require('../../');
+const { ArcHeaders } = require('@advanced-rest-client/arc-headers/src/ArcHeaders.js');
+const { SocketRequest } = require('../../');
 const chunkedServer = require('../chunked-server');
 const ExpressServer = require('../express-api.js');
 const { logger } = require('../dummy-logger.js');
