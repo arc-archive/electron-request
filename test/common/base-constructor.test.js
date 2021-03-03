@@ -56,9 +56,9 @@ describe('BaseRequest constructor', () => {
     assert.deepEqual(request.hosts, hosts);
   });
 
-  it('Sets uri', () => {
+  it('sets the uri', () => {
     const request = new BaseRequest(requestData, id);
-    assert.typeOf(request.uri, 'object');
+    assert.typeOf(request.uri, 'url');
   });
 
   it('Sets hostHeader', () => {

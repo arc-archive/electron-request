@@ -1,4 +1,3 @@
-import { UrlWithStringQuery } from 'url';
 import { ConnectionOptions } from 'tls';
 import { Socket } from 'net';
 import { EventEmitter } from 'events';
@@ -40,7 +39,7 @@ export declare class BaseRequest extends EventEmitter {
   /**
    * Parsed value of the request URL.
    */
-  uri: UrlWithStringQuery;
+  uri: URL;
   socket: Socket;
   /**
    * Host header can be different than registered URL because of

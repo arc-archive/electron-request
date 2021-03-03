@@ -12,14 +12,14 @@ describe('BaseRequest uri', () => {
 
   it('uri is parsed URL', () => {
     const request = new BaseRequest(requestData, id);
-    assert.typeOf(request.uri, 'object');
+    assert.typeOf(request.uri, 'URL');
     assert.equal(request.uri.hostname, 'domain.com');
   });
 
   it('changes uri', () => {
     const request = new BaseRequest(requestData, id);
     request._updateUrl('http://other.com');
-    assert.typeOf(request.uri, 'object');
+    assert.typeOf(request.uri, 'URL');
     assert.equal(request.uri.hostname, 'other.com');
   });
 

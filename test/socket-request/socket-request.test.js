@@ -101,6 +101,12 @@ describe('Socket request basics', () => {
         },
       ],
     },
+    // 10
+    {
+      url: `http://localhost:${httpPort}/v1/query-params?va=test-paßword`,
+      method: 'GET',
+      headers: '',
+    },
   ]);
 
   const opts = /** @type Options[] */ ([{
@@ -152,8 +158,8 @@ describe('Socket request basics', () => {
       assert.lengthOf(request.hosts, 1);
     });
 
-    it('Sets uri property', () => {
-      assert.typeOf(request.uri, 'object');
+    it('sets the uri property', () => {
+      assert.typeOf(request.uri, 'url');
     });
 
     it('Sets hostHeader property', () => {
@@ -302,6 +308,12 @@ describe('Socket request basics', () => {
       const result = request._prepareMessage(headers, Buffer.from(requests[1].payload)).toString();
       assert.equal(result.split('\n')[4], 'test');
       assert.equal(result.split('\n')[5], 'test');
+    });
+
+    it('encodes query parameters', () => {
+      const request = new SocketRequest(requests[10], requestId, opts[0]);
+      const result = request._prepareMessage(new ArcHeaders('')).toString();
+      assert.include(result, 'GET /v1/query-params?va=test-pa%C3%9Fword HTTP/1.1');
     });
   });
 

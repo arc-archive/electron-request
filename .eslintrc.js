@@ -15,6 +15,7 @@ module.exports = {
     es6: true,
   },
   plugins: ['no-only-tests', 'babel', 'import'],
+  ignorePatterns: ['*.d.ts'],
   rules: {
     'arrow-parens': [
       'error',
