@@ -1,6 +1,10 @@
 export { SocketRequest } from './lib/SocketRequest';
 export { ElectronRequest } from './lib/ElectronRequest';
-export { RequestOptions } from './lib/RequestOptions';
+export {
+  Options,
+  Logger,
+  RequestOptions,
+} from './lib/RequestOptions';
 export { BaseRequest } from './lib/BaseRequest';
 export { HostRulesEval } from './lib/HostRulesEval';
 export { PayloadSupport } from './lib/PayloadSupport';
