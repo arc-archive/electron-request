@@ -68,6 +68,7 @@ export declare class BaseRequest extends EventEmitter {
    * True if following redirects is allowed.
    */
   get followRedirects(): boolean;
+  get timeout(): number;
 
   on(event: 'beforeredirect', listener: (id: string, detail: object) => void): this;
   on(event: 'error', listener: (error: Error, id: string, transport: ArcRequest.TransportRequest, response: ArcResponse.ErrorResponse) => void): this;

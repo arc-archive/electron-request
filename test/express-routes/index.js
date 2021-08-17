@@ -8,6 +8,7 @@ const redirectRoute = require('./redirects-api.js');
 const imageRoute = require('./images-api.js');
 const responsesRoute = require('./responses-api.js');
 const compressionRoute = require('./compress-api.js');
+const delayRoute = require('./DelayRoute.js');
 
 const router = express.Router();
 module.exports = router;
@@ -21,3 +22,4 @@ router.use('/redirect', redirectRoute);
 router.use('/image', imageRoute);
 router.use('/response', responsesRoute);
 router.use('/compression', compressionRoute);
+router.use('/delay', delayRoute);

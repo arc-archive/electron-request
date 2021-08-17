@@ -6,9 +6,10 @@
   "module": "main.js",
   "scripts": {
     "test": "electron-mocha --timeout 20000 --renderer test/**/*.test.js",
-    "test-receiving": "electron-mocha --renderer test/socket-request-receiving.renderer.test.js",
-    "test-basic": "electron-mocha --renderer test/socket-request.renderer.test.js",
-    "test-test": "electron-mocha --renderer test/utils.renderer.test.js",
+    "test:receiving": "electron-mocha --renderer test/socket-request-receiving.renderer.test.js",
+    "test:basic": "electron-mocha --renderer test/socket-request.renderer.test.js",
+    "test:test": "electron-mocha --renderer test/utils.renderer.test.js",
+    "test:timeouts": "electron-mocha --renderer test/socket-request/timeout.test.js",
     "lint:eslint": "eslint --ext .js,.html . --ignore-path .gitignore",
     "format:eslint": "eslint --ext .js,.html . --fix --ignore-path .gitignore",
     "lint": "npm run lint:eslint",
