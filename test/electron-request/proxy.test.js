@@ -134,7 +134,7 @@ describe('Proxying requests', () => {
       assert.isAtLeast(response.loadingTime, body.delay, 'has the loading time');
 
       assert.strictEqual(response.timings.blocked, 0, 'has the timings.blocked');
-      assert.isAtLeast(response.timings.connect, 0, 'has the timings.connect');
+      assert.typeOf(response.timings.connect, 'number', 'has the timings.connect');
       assert.isAtLeast(response.timings.receive, 0, 'has the timings.receive');
       assert.isAtLeast(response.timings.send, 0, 'has the timings.send');
       assert.isAtLeast(response.loadingTime, response.timings.wait, 'has the timings.wait');
