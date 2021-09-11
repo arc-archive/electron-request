@@ -4,6 +4,7 @@ import { Socket } from 'net';
 import { ArcRequest } from '@advanced-rest-client/arc-types';
 import { BaseRequest } from './BaseRequest.js';
 import { Options } from './RequestOptions';
+import { RequestOptions } from 'https';
 
 /**
  * A HTTP client for ARC that uses Electron APIs to make a request.
@@ -47,6 +48,13 @@ export declare class ElectronRequest extends BaseRequest {
   _connect(message: Buffer): ClientRequest;
 
   /**
+   * Connects to the remote machine via a proxy.
+   * @param {Buffer} message
+   * @return {http.ClientRequest} [description]
+   */
+  _connectProxy(message: Buffer): ClientRequest;
+
+  /**
    * Creates a default options for a request.
    * @param uri Instance of URL class for current URL.
    */
@@ -64,9 +72,59 @@ export declare class ElectronRequest extends BaseRequest {
   _connectHttp(message: Buffer, uri: URL): ClientRequest;
 
   /**
+   * Creates options to be set on the proxy request.
+   * It replaces the original `host` and `port` values with the ones defined
+   * for the proxy server.
+   *
+   * @param proxy The proxy URI. (e.g. 10.0.0.12:8118)
+   * @param requestUri The original request URI.
+   * @param requestOptions The original request options
+   * @param auth Optional authorization.
+   */
+  _createProxyOptions(proxy: string, requestUri: URL, requestOptions: RequestOptions, auth?: string): RequestOptions;
+
+  /**
+   * Creates a connection to non-ssl target via a non-ssl proxy.
+   *
+   * @param message The message to send
+   * @param uri The target URI
+   * @param proxy The proxy URI
+   * @param auth Optional authorization header value (not encoded).
+   */
+  _proxyHttpOverHttp(message: Buffer, uri: URL, proxy: String, auth?: string): ClientRequest;
+
+  /**
+   * Creates a connection to non-ssl target via an ssl proxy.
+   *
+   * @param message The message to send
+   * @param uri The target URI
+   * @param proxy The proxy URI
+   * @param auth Optional authorization header value (not encoded).
+   */
+  _proxyHttpsOverHttp(message: Buffer, uri: URL, proxy: String, auth?: string): ClientRequest;
+
+  /**
    * Creates a connection using SSL transport.
    */
-  _connectSsl(message: Buffer, uri: URL): ClientRequest;
+  _connectHttps(message: Buffer, uri: URL): ClientRequest;
+
+  /**
+   * Creates a connection to a non-ssl target using SSL proxy.
+   * @param message
+   * @param uri
+   * @param proxy The proxy URI
+   * @param auth Optional authorization header value (not encoded).
+   */
+   _proxyHttpOverHttps(message: Buffer, uri: URL, proxy: String, auth?: string): ClientRequest;
+
+  /**
+   * Creates a connection to a non-ssl target using SSL proxy.
+   * @param message
+   * @param uri
+   * @param proxy The proxy URI
+   * @param auth Optional authorization header value (not encoded).
+   */
+  _proxyHttpsOverHttps(message: Buffer, uri: URL, proxy: String, auth?: string): ClientRequest;
 
   /**
    * Sets listeners on a socket

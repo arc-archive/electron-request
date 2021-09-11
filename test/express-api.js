@@ -1,60 +1,136 @@
 /* eslint-disable no-console */
 const express = require('express');
-const bodyParser = require('body-parser');
-const formData = require('express-form-data');
-const os = require('os');
+const http = require('http');
+const https = require('https');
+const getPort = require('get-port');
+const path = require('path');
+const fs = require('fs-extra');
 const apiRouter = require('./express-routes/index.js');
 
 /** @typedef {import('http').Server} Server */
 /** @typedef {import('net').Socket} Socket */
 
-const app = express();
-app.disable('etag');
-app.disable('x-powered-by');
-app.set('trust proxy', true);
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use(bodyParser.raw());
-app.use(formData.parse({
-  uploadDir: os.tmpdir(),
-  autoClean: true,
-}));
+class ExpressServer {
+  constructor() {
+    /** @type Server */
+    this.httpServer = undefined;
+    /** @type Server */
+    this.httpsServer = undefined;
+    /** @type Socket[] */
+    this.httpSockets = [];
+    /** @type Socket[] */
+    this.httpsSockets = [];
+    /** @type number */
+    this.httpPort = undefined;
+    /** @type number */
+    this.httpsPort = undefined;
 
-app.use('/v1', apiRouter);
-app.get('/_ah/health', (req, res) => {
-  res.status(200).send('ok');
-});
-// Basic 404 handler
-app.use((req, res) => {
-  res.status(404).send('Not Found');
-});
-// // Basic error handler
-// app.use((err, req, res) => {
-//   /* jshint unused:false */
-//   res.status(500).send({
-//     error: true,
-//     message: err.response || 'Something is wrong...',
-//   });
-// });
-let server = /** @type Server */ (null);
-const sockets = [];
+    const app = express();
+    this.app = app;
+    app.disable('etag');
+    app.disable('x-powered-by');
+    app.set('trust proxy', true);
+    this.#setupRoutes();
+  }
 
-module.exports.startServer = (port) =>
-  new Promise((resolve) => {
-    server = app.listen(port, () => resolve());
-    server.on('connection', (socket) => {
-      sockets.push(sockets);
-      socket.on('close', () => {
-        const index = sockets.indexOf(socket);
-        sockets.splice(index, 1);
+  #setupRoutes() {
+    const { app } = this;
+    app.use('/v1', apiRouter);
+    app.get('/_ah/health', (req, res) => {
+      res.status(200).send('ok');
+    });
+    // Basic 404 handler
+    app.use((req, res) => {
+      res.status(404).send('Not Found');
+    });
+  }
+
+  async start() {
+    await this.startHttp();
+    await this.startHttps();
+  }
+
+  async stop() {
+    await this.stopHttp();
+    await this.stopHttps();
+  }
+
+  /**
+   * @param {number=} port Optional port number to open. If not set a random port is selected.
+   * @return {Promise<number>} The opened port number.
+   */
+  async startHttp(port) {
+    this.httpPort = port || await getPort({ port: getPort.makeRange(8000, 8100) });
+    return new Promise((resolve) => {
+      this.httpServer = http.createServer(this.app);
+      this.httpServer.listen(this.httpPort, () => resolve(this.httpPort));
+      this.httpServer.on('connection', (socket) => {
+        this.httpSockets.push(socket);
+        socket.on('close', () => {
+          const index = this.httpSockets.indexOf(socket);
+          this.httpSockets.splice(index, 1);
+        });
       });
     });
-  });
-module.exports.stopServer = () =>
-  new Promise((resolve) => {
-    if (sockets.length) {
-      console.error(`There are ${sockets.length} connections when closing the server`);
-    }
-    // console.log('closing', sockets);
-    server.close(() => resolve());
-  });
+  }
+  
+  /**
+   * @param {number=} port Optional port number to open. If not set a random port is selected.
+   * @return {Promise<number>} The opened port number.
+   */
+  async startHttps(port) {
+    this.httpsPort = port || await getPort({ port: getPort.makeRange(8000, 8100) });
+    const key = await fs.readFile(path.join('test', 'certs', 'privkey.pem'));
+    const cert = await fs.readFile(path.join('test', 'certs', 'fullchain.pem'));
+    const options = {
+      key,
+      cert,
+    };
+    return new Promise((resolve) => {
+      this.httpsServer = https.createServer(options, this.app);
+      this.httpsServer.listen(this.httpsPort, () => resolve(this.httpsPort));
+      this.httpServer.on('connection', (socket) => {
+        this.httpsSockets.push(socket);
+        socket.on('close', () => {
+          const index = this.httpsSockets.indexOf(socket);
+          this.httpsSockets.splice(index, 1);
+        });
+      });
+    });
+  }
+
+  async stopHttp() {
+    return new Promise((resolve) => {
+      const { httpSockets, httpServer } = this;
+      if (httpSockets.length) {
+        console.error(`There are ${httpSockets.length} connections when closing the server`);
+        httpSockets.forEach((s) => s.destroy());
+      }
+      httpServer.close(() => resolve());
+    });
+  }
+
+  async stopHttps() {
+    return new Promise((resolve) => {
+      const { httpsSockets, httpsServer } = this;
+      if (httpsSockets.length) {
+        console.error(`There are ${httpsSockets.length} connections when closing the server`);
+        httpsSockets.forEach((s) => s.destroy());
+      }
+      httpsServer.close(() => resolve());
+    });
+  }
+}
+
+module.exports.ExpressServer = ExpressServer;
+
+// compatibility with old tests.
+const instance = new ExpressServer();
+/**
+ * @param {number=} port Optional port number to open. If not set a random port is selected.
+ * @return {Promise<number>} The opened port number.
+ */
+module.exports.startServer = (port) => instance.startHttp(port);
+
+module.exports.stopServer = () => instance.stopHttp();
+  

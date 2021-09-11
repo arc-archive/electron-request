@@ -24,6 +24,8 @@ module.exports = {
         requireForBlockBody: true,
       },
     ],
+    'arrow-body-style': ['error', 'as-needed'],
+    'no-trailing-spaces': ['error', { skipBlankLines: true }],
     'lines-between-class-members': 'error',
     'no-underscore-dangle': 'off',
     'no-only-tests/no-only-tests': 'error',
@@ -88,6 +90,7 @@ module.exports = {
       rules: {
         'require-jsdoc': 'off',
         'no-empty-function': 'off',
+        'no-console': 'off',
       },
     },
   ],

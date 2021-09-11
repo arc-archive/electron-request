@@ -28,11 +28,8 @@ class PostApiRoute extends BaseApi {
    */
   async echoProperties(req, res) {
     const { headers, query } = req;
-    let { body } = req;
-    if (body instanceof Buffer) {
-      body = body.toString();
-    }
-    res.send({ headers, query, body });
+    const body = await this.readRequestBuffer(req);
+    res.send({ headers, query, body: body.toString('utf8') });
   }
 }
 const api = new PostApiRoute();
