@@ -1,5 +1,5 @@
 const { assert } = require('chai');
-const { ElectronRequest } = require('../../index.js');
+const { SocketRequest } = require('../../index.js');
 const { untilResponse } = require('../Utils.js');
 const ProxyServer = require('../ProxyServer.js');
 const { ExpressServer } = require('../express-api.js');
@@ -8,15 +8,13 @@ const { logger } = require('../dummy-logger.js');
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
 /** @typedef {import('../../').Options} Options */
 
-describe('Proxying requests (electron request)', () => {
+describe('Proxying requests (Socket request)', () => {
   const id = 'r-1';
   const httpOpts = /** @type Options */ ({
     logger,
-    validateCertificates: false,
   });
   const httpsOpts = /** @type Options */ ({
     logger,
-    validateCertificates: false,
   });
   const proxy = new ProxyServer();
   const server = new ExpressServer();
@@ -29,6 +27,7 @@ describe('Proxying requests (electron request)', () => {
     // proxy.debug = true;
     await proxy.start();
     await server.start();
+    // opts.proxy = '192.168.86.249:8118';
     httpOpts.proxy = `127.0.0.1:${proxy.httpPort}`;
     httpsOpts.proxy = `https://127.0.0.1:${proxy.httpsPort}`;
     baseHttpHostname = `localhost:${server.httpPort}`;
@@ -47,7 +46,7 @@ describe('Proxying requests (electron request)', () => {
         method: 'GET',
         headers: 'x-custom: true',
       });
-      const request = new ElectronRequest(config, id, httpOpts);
+      const request = new SocketRequest(config, id, httpOpts);
       await request.send();
       const info = await untilResponse(request);
       assert.ok(info, 'has the ARC response');
@@ -58,7 +57,7 @@ describe('Proxying requests (electron request)', () => {
       assert.ok(response.payload, 'has the payload');
       const bodyStr = response.payload.toString('utf8');
       const body = JSON.parse(bodyStr);
-      
+
       assert.equal(body.headers['x-custom'], 'true', 'passes request headers');
       assert.equal(body.headers.host, `${baseHttpHostname}`, 'sets the destination host header');
       // the definite proof that the request gone through the proxy, set by the proxy.
@@ -73,7 +72,7 @@ describe('Proxying requests (electron request)', () => {
       assert.isAtLeast(response.timings.receive, 0, 'has the timings.receive');
       assert.isAtLeast(response.timings.send, 0, 'has the timings.send');
       assert.isAtLeast(response.loadingTime, response.timings.wait, 'has the timings.wait');
-      assert.strictEqual(response.timings.dns, -1, 'has the timings.dns');
+      assert.typeOf(response.timings.dns, 'number', 'has the timings.dns');
       assert.strictEqual(response.timings.ssl, -1, 'has the timings.ssl');
     });
 
@@ -85,7 +84,7 @@ describe('Proxying requests (electron request)', () => {
         headers: `content-type: application/json\nx-custom: true`,
         payload,
       });
-      const request = new ElectronRequest(config, id, httpOpts);
+      const request = new SocketRequest(config, id, httpOpts);
       await request.send();
       const info = await untilResponse(request);
       assert.ok(info, 'has the ARC response');
@@ -102,7 +101,7 @@ describe('Proxying requests (electron request)', () => {
       assert.equal(body.headers.host, `${baseHttpHostname}`, 'sets the destination host header');
       // the definite proof that the request gone through the proxy, set by the proxy.
       assert.equal(body.headers.via, '1.1 localhost', 'sets the proxy header');
-      
+
       assert.deepEqual(body.query, { x: 'y' }, 'passes the query parameters');
       assert.equal(body.method, 'POST', 'passes the method');
       assert.equal(body.protocol, 'http', 'uses the http protocol');
@@ -126,7 +125,7 @@ describe('Proxying requests (electron request)', () => {
       });
       // config.url = 'https://httpbin.org/get?o=p';
       // httpOpts.proxy = '192.168.86.249:8118';
-      const request = new ElectronRequest(config, id, httpOpts);
+      const request = new SocketRequest(config, id, httpOpts);
       await request.send();
       const info = await untilResponse(request);
       assert.ok(info, 'has the ARC response');
@@ -138,7 +137,7 @@ describe('Proxying requests (electron request)', () => {
       assert.ok(response.payload, 'has the payload');
       const bodyStr = response.payload.toString('utf8');
       const body = JSON.parse(bodyStr);
-      
+      console.log('body.headers', body.headers);
       assert.equal(body.headers['x-custom'], 'true', 'passes request headers');
       assert.equal(body.headers.host, `${baseHttpsHostname}`, 'sets the destination host header');
       assert.deepEqual(body.query, { o: 'p' }, 'passes the query parameters');
@@ -152,7 +151,7 @@ describe('Proxying requests (electron request)', () => {
       assert.isAtLeast(response.timings.send, 0, 'has the timings.send');
       assert.isAtLeast(response.loadingTime, response.timings.wait, 'has the timings.wait');
       assert.typeOf(response.timings.dns, 'number', 'has the timings.dns');
-      assert.isAtLeast(response.timings.ssl, 0, 'has the timings.ssl');
+      assert.isAtLeast(response.timings.ssl, -1, 'has the timings.ssl');
     });
 
     it('posts to an HTTPS server', async () => {
@@ -163,7 +162,7 @@ describe('Proxying requests (electron request)', () => {
         headers: `content-type: application/json\nx-custom: true`,
         payload,
       });
-      const request = new ElectronRequest(config, id, httpOpts);
+      const request = new SocketRequest(config, id, httpOpts);
       await request.send();
       const info = await untilResponse(request);
       assert.ok(info, 'has the ARC response');
@@ -190,7 +189,7 @@ describe('Proxying requests (electron request)', () => {
       assert.isAtLeast(response.timings.send, 0, 'has the timings.send');
       assert.isAtLeast(response.loadingTime, response.timings.wait, 'has the timings.wait');
       assert.typeOf(response.timings.dns, 'number', 'has the timings.dns');
-      assert.isAtLeast(response.timings.ssl, 0, 'has the timings.ssl');
+      assert.isAtLeast(response.timings.ssl, -1, 'has the timings.ssl');
     });
 
     it('uses the proxy for redirects', async () => {
@@ -199,7 +198,7 @@ describe('Proxying requests (electron request)', () => {
         method: 'GET',
         headers: 'x-custom: true',
       });
-      const request = new ElectronRequest(config, id, httpOpts);
+      const request = new SocketRequest(config, id, httpOpts);
       await request.send();
       const info = await untilResponse(request);
       assert.ok(info, 'has the ARC response');
@@ -225,7 +224,7 @@ describe('Proxying requests (electron request)', () => {
         headers: 'x-custom: true',
       });
       const localOptions = { ...httpOpts, proxyUsername: 'proxy-name', proxyPassword: 'proxy-password' };
-      const request = new ElectronRequest(config, id, localOptions);
+      const request = new SocketRequest(config, id, localOptions);
       await request.send();
       const info = await untilResponse(request);
       assert.ok(info, 'has the ARC response');
@@ -248,7 +247,7 @@ describe('Proxying requests (electron request)', () => {
         headers: 'x-custom: true',
       });
       const localOptions = { ...httpOpts, proxyUsername: 'some-name' };
-      const request = new ElectronRequest(config, id, localOptions);
+      const request = new SocketRequest(config, id, localOptions);
       await request.send();
       const info = await untilResponse(request);
 
@@ -271,7 +270,7 @@ describe('Proxying requests (electron request)', () => {
         method: 'GET',
         headers: 'x-custom: true',
       });
-      const request = new ElectronRequest(config, id, httpsOpts);
+      const request = new SocketRequest(config, id, httpsOpts);
       await request.send();
       const info = await untilResponse(request);
       assert.ok(info, 'has the ARC response');
@@ -288,6 +287,7 @@ describe('Proxying requests (electron request)', () => {
       assert.equal(body.headers.host, `${baseHttpHostname}`, 'sets the destination host header');
       // the definite proof that the request gone through the proxy, set by the proxy.
       assert.equal(body.headers.via, '1.1 localhost', 'sets the proxy header');
+
       assert.deepEqual(body.query, { a: 'b' }, 'passes the query parameters');
       assert.equal(body.method, 'GET', 'passes the method');
       assert.equal(body.protocol, 'http', 'uses the http protocol');
@@ -298,7 +298,7 @@ describe('Proxying requests (electron request)', () => {
       assert.isAtLeast(response.timings.receive, 0, 'has the timings.receive');
       assert.isAtLeast(response.timings.send, 0, 'has the timings.send');
       assert.isAtLeast(response.loadingTime, response.timings.wait, 'has the timings.wait');
-      assert.strictEqual(response.timings.dns, -1, 'has the timings.dns');
+      assert.strictEqual(response.timings.dns, 0, 'has the timings.dns');
       assert.isAtLeast(response.timings.ssl, 0, 'has the timings.ssl');
     });
 
@@ -310,7 +310,7 @@ describe('Proxying requests (electron request)', () => {
         headers: `content-type: application/json\nx-custom: true`,
         payload,
       });
-      const request = new ElectronRequest(config, id, httpsOpts);
+      const request = new SocketRequest(config, id, httpsOpts);
       await request.send();
       const info = await untilResponse(request);
       assert.ok(info, 'has the ARC response');
@@ -349,7 +349,7 @@ describe('Proxying requests (electron request)', () => {
         method: 'GET',
         headers: 'x-custom: true',
       });
-      const request = new ElectronRequest(config, id, httpsOpts);
+      const request = new SocketRequest(config, id, httpsOpts);
       await request.send();
       const info = await untilResponse(request);
       assert.ok(info, 'has the ARC response');
@@ -386,10 +386,10 @@ describe('Proxying requests (electron request)', () => {
         headers: `content-type: application/json\nx-custom: true`,
         payload,
       });
-      const request = new ElectronRequest(config, id, httpsOpts);
+      const request = new SocketRequest(config, id, httpsOpts);
       await request.send();
       const info = await untilResponse(request);
-      assert.ok(info, 'has the ARC response');
+      assert.ok(config, 'has the ARC response');
       const { response } = info;
       assert.strictEqual(response.status, 200, 'has the response status code');
       assert.strictEqual(response.statusText, 'OK', 'has the response status text');
@@ -422,7 +422,7 @@ describe('Proxying requests (electron request)', () => {
         method: 'GET',
         headers: 'x-custom: true',
       });
-      const request = new ElectronRequest(config, id, httpOpts);
+      const request = new SocketRequest(config, id, httpOpts);
       await request.send();
       const info = await untilResponse(request);
       assert.ok(info, 'has the ARC response');
@@ -446,7 +446,7 @@ describe('Proxying requests (electron request)', () => {
         headers: 'x-custom: true',
       });
       const localOptions = { ...httpOpts, proxyUsername: 'proxy-name', proxyPassword: 'proxy-password' };
-      const request = new ElectronRequest(config, id, localOptions);
+      const request = new SocketRequest(config, id, localOptions);
       await request.send();
       const info = await untilResponse(request);
       assert.ok(info, 'has the ARC response');
@@ -458,36 +458,14 @@ describe('Proxying requests (electron request)', () => {
       // because the connection is over SSL. Just the 200 is enough since we are controlling the server,
     });
 
-    it('handles proxy authorization errors (HTTP)', async () => {
-      const config = /** @type ArcBaseRequest */ ({
-        url: `http://${baseHttpHostname}/v1/get?a=b`,
-        method: 'GET',
-        headers: 'x-custom: true',
-      });
-      const localOptions = { ...httpOpts, proxyUsername: 'some-name' };
-      const request = new ElectronRequest(config, id, localOptions);
-      await request.send();
-      const info = await untilResponse(request);
-
-      assert.ok(info, 'has the ARC response');
-      const { response } = info;
-      assert.strictEqual(response.status, 401, 'has the response status code');
-      assert.strictEqual(response.statusText, 'Unauthorized', 'has the response status text');
-      
-      const bodyStr = response.payload.toString('utf8');
-      const body = JSON.parse(bodyStr);
-      
-      assert.equal(body.error, 'the proxy credentials are invalid', 'has the error message');
-    });
-
-    it('handles proxy authorization errors (HTTPS)', async () => {
+    it('handles proxy authorization errors', async () => {
       const config = /** @type ArcBaseRequest */ ({
         url: `https://${baseHttpsHostname}/v1/get?a=b`,
         method: 'GET',
         headers: 'x-custom: true',
       });
       const localOptions = { ...httpOpts, proxyUsername: 'some-name' };
-      const request = new ElectronRequest(config, id, localOptions);
+      const request = new SocketRequest(config, id, localOptions);
       await request.send();
       const info = await untilResponse(request);
 

@@ -241,4 +241,9 @@ export declare class BaseRequest extends EventEmitter {
    * added to this object.
    */
   _addClientCertificate(cert: ClientCertificate.ClientCertificate, options: ConnectionOptions): void;
+
+  /**
+   * @return Proxy authorization header value, when defined.
+   */
+  _proxyAuthHeader(): string|undefined;
 }
