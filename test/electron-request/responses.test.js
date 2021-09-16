@@ -1,33 +1,35 @@
-const assert = require('chai').assert;
+const { assert } = require('chai');
 const { ArcHeaders } = require('@advanced-rest-client/arc-headers/src/ArcHeaders.js');
-const { ElectronRequest } = require('../../');
-const ExpressServer = require('../express-api.js');
+const { ElectronRequest } = require('../../index.js');
+const { ExpressServer } = require('../express-api.js');
+const { untilResponse } = require('../Utils.js');
 
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
 /** @typedef {import('../../lib/RequestOptions').Options} Options */
 
 describe('Electron request', () => {
-  const expressPort = 8125;
+  const server = new ExpressServer();
+  /** @type number */
+  const httpPort = 8125;
+  
   before(async () => {
-    // await chunkedServer.startServer(httpPort, sslPort);
-    await ExpressServer.startServer(expressPort);
+    await server.startHttp(httpPort);
   });
 
   after(async () => {
-    // await chunkedServer.stopServer();
-    await ExpressServer.stopServer();
+    await server.stopHttp();
   });
 
   describe('Responses test', () => {
     [
-      ['Image - jpeg', `http://localhost:${expressPort}/v1/image/jpeg`, 'image/jpeg'],
-      ['Image - png', `http://localhost:${expressPort}/v1/image/png`, 'image/png'],
-      ['Image - svg', `http://localhost:${expressPort}/v1/image/svg`, 'image/svg+xml'],
-      ['Image - webp', `http://localhost:${expressPort}/v1/image/webp`, 'image/webp'],
-      ['html', `http://localhost:${expressPort}/v1/response/html`, 'text/html; charset=UTF-8'],
-      ['json', `http://localhost:${expressPort}/v1/response/json`, 'application/json'],
-      ['xml', `http://localhost:${expressPort}/v1/response/xml`, 'application/xml'],
-      ['Bytes', `http://localhost:${expressPort}/v1/response/bytes/120`, 'application/octet-stream'],
+      ['Image - jpeg', `http://localhost:${httpPort}/v1/image/jpeg`, 'image/jpeg'],
+      ['Image - png', `http://localhost:${httpPort}/v1/image/png`, 'image/png'],
+      ['Image - svg', `http://localhost:${httpPort}/v1/image/svg`, 'image/svg+xml'],
+      ['Image - webp', `http://localhost:${httpPort}/v1/image/webp`, 'image/webp'],
+      ['html', `http://localhost:${httpPort}/v1/response/html`, 'text/html; charset=UTF-8'],
+      ['json', `http://localhost:${httpPort}/v1/response/json`, 'application/json'],
+      ['xml', `http://localhost:${httpPort}/v1/response/xml`, 'application/xml'],
+      ['Bytes', `http://localhost:${httpPort}/v1/response/bytes/120`, 'application/octet-stream'],
     ].forEach((item, index) => {
       const [name, url, mime] = item;
       it(`Reads the response: ${name}`, (done) => {
@@ -42,6 +44,7 @@ describe('Electron request', () => {
             assert.ok(response.payload, 'has the payload');
             const headers = new ArcHeaders(response.headers);
             assert.equal(headers.get('content-type'), mime, 'has the content type');
+            // @ts-ignore
             const { length } = Buffer.from(response.payload);
             assert.equal(headers.get('content-length'), String(length));
           } catch (e) {
@@ -58,9 +61,9 @@ describe('Electron request', () => {
 
   describe('Compression test', () => {
     [
-      ['brotli', `http://localhost:${expressPort}/v1/compression/brotli`, 'br'],
-      ['deflate', `http://localhost:${expressPort}/v1/compression/deflate`, 'deflate'],
-      ['gzip', `http://localhost:${expressPort}/v1/compression/gzip`, 'gzip'],
+      ['brotli', `http://localhost:${httpPort}/v1/compression/brotli`, 'br'],
+      ['deflate', `http://localhost:${httpPort}/v1/compression/deflate`, 'deflate'],
+      ['gzip', `http://localhost:${httpPort}/v1/compression/gzip`, 'gzip'],
     ].forEach((item, index) => {
       const [name, url, enc] = item;
       it(`reads the compressed response: ${name}`, (done) => {
@@ -94,7 +97,7 @@ describe('Electron request', () => {
   describe('Timings tests', () => {
     it('has the stats object', (done) => {
       const request = new ElectronRequest({
-        url: `http://localhost:${expressPort}/v1/get`,
+        url: `http://localhost:${httpPort}/v1/get`,
         method: 'GET',
       }, 'test');
       request.once('load', (id, response) => {
@@ -108,7 +111,7 @@ describe('Electron request', () => {
     ['connect', 'receive', 'send', 'wait', 'dns', 'ssl'].forEach((prop) => {
       it(`Has ${prop} value`, (done) => {
         const request = new ElectronRequest({
-          url: `http://localhost:${expressPort}/v1/get`,
+          url: `http://localhost:${httpPort}/v1/get`,
           method: 'GET',
         }, 'test');
         request.once('load', (id, response) => {
@@ -137,7 +140,7 @@ describe('Electron request', () => {
   describe('Request size', () => {
     it('has the request size value', (done) => {
       const request = new ElectronRequest({
-        url: `http://localhost:${expressPort}/v1/get`,
+        url: `http://localhost:${httpPort}/v1/get`,
         method: 'GET',
       }, 'test');
       request.once('load', (id, response) => {
@@ -148,17 +151,14 @@ describe('Electron request', () => {
       request.send();
     });
 
-    it('has the response size value', (done) => {
+    it('has the response size value', async () => {
       const request = new ElectronRequest({
-        url: `http://localhost:${expressPort}/v1/get`,
+        url: `http://localhost:${httpPort}/v1/get`,
         method: 'GET',
       }, 'test');
-      request.once('load', (id, response) => {
-        assert.equal(response.size.response, 69);
-        done();
-      });
-      request.once('error', (err) => done(err));
-      request.send();
+      await request.send();
+      const info = await untilResponse(request);
+      assert.equal(info.response.size.response, 238);
     });
   });
 });

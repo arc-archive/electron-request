@@ -4,6 +4,7 @@ import { BaseRequest } from './BaseRequest';
 import { Options } from './RequestOptions';
 import { ResponsePublishOptions } from './RequestTypes';
 import { ArcRequest, Authorization } from '@advanced-rest-client/arc-types';
+import { ConnectionOptions } from 'tls';
 
 /**
  * Transport library for Advanced REST Client for node via Electron app.
@@ -85,6 +86,31 @@ export declare class SocketRequest extends BaseRequest {
    * @return Promise resolved when socket is connected.
    */
   connect(): Promise<Socket>;
+  /**
+   * Connects to a server through a proxy. Depending on the proxy type the returned socket
+   * is a socket created after creating a tunnel (SSL) or the proxy socket.
+   *
+   * @return Promise resolved when socket is connected.
+   */
+  connectProxy(): Promise<Socket|undefined>;
+
+  /**
+   * Creates a tunnel to a Proxy for SSL connections.
+   * The returned socket is the one created after the tunnel is established.
+   * @param proxyIsSsl Whether the proxy is an SSL connection.
+   * @return Promise resolved when socket is connected.
+   */
+  connectTunnel(proxyIsSsl?: boolean): Promise<Socket|undefined>;
+
+  /**
+   * Creates connection to a proxy for an HTTP (non-SSL) transport.
+   * This is the same as calling _connect or _connectTls but the target is the proxy and not the
+   * target URL. The message sent to the proxy server is different than the one sent
+   * to the target.
+   * @param proxyIsSsl
+   * @return Promise resolved when socket is connected.
+   */
+  proxyHttp(proxyIsSsl?: boolean): Promise<Socket>;
 
   /**
    * Connects to a server and writes a message using insecure connection.
@@ -93,7 +119,12 @@ export declare class SocketRequest extends BaseRequest {
    * @param host A host name to connect to
    * @returns A promise resolved when the message was sent to a server
    */
-  _connect(port: number, host: string): Promise<Socket>
+  _connect(port: number, host: string): Promise<Socket>;
+
+  /**
+   * @param target A target where to add the options.
+   */
+  _addSslOptions(target: ConnectionOptions): void;
 
   /**
    * Connects to a server and writes a message using secured connection.
@@ -112,6 +143,14 @@ export declare class SocketRequest extends BaseRequest {
    * @returns `Buffer` of a HTTP message
    */
   _prepareMessage(headers: ArcHeaders, buffer?: Buffer): Buffer;
+
+  /**
+   * Creates an HTTP status line for the message.
+   * For proxy connections it, depending whether target is SSL or not, sets the path
+   * as the full URL or just the authority.
+   * @return The generates status message.
+   */
+  _createHttpStatus(): string;
 
   /**
    * Tests if current connection is required to add `host` header.

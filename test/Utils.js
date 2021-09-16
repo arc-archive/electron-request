@@ -16,10 +16,10 @@
  */
 async function untilResponse(request) {
   return new Promise((resolve, reject) => {
-    request.on('error', (error) => {
+    request.once('error', (error) => {
       reject(error);
     });
-    request.on('load', (id, response, transport) => {
+    request.once('load', (id, response, transport) => {
       resolve({
         id,
         response,
@@ -34,10 +34,10 @@ async function untilResponse(request) {
  */
 async function untilBody(request) {
   return new Promise((resolve, reject) => {
-    request.on('error', (error) => {
+    request.once('error', (error) => {
       reject(error);
     });
-    request.on('load', (id, response) => {
+    request.once('load', (id, response) => {
       const { payload } = response;
       const body = payload.toString('utf8');
       let parsed;

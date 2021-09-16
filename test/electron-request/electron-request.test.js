@@ -1,37 +1,35 @@
 const { assert } = require('chai');
-const url = require('url');
-const { ElectronRequest } = require('../../');
+const { URL } = require('url');
+const { ElectronRequest } = require('../../index.js');
 const { untilBody } = require('../Utils.js');
-const ExpressServer = require('../express-api.js');
+const { ExpressServer } = require('../express-api.js');
 
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
 /** @typedef {import('../../lib/RequestOptions').Options} Options */
 
 describe('Electron request', () => {
-  const expressPort = 8125;
+  const server = new ExpressServer();
+  /** @type number */
+  let httpPort;
+  /** @type ArcBaseRequest[] */
+  let requests;
+
+  const jsonBody = JSON.stringify({ test: true, body: 'some value' });
+
   before(async () => {
-    // await chunkedServer.startServer(httpPort, sslPort);
-    await ExpressServer.startServer(expressPort);
-  });
-
-  after(async () => {
-    // await chunkedServer.stopServer();
-    await ExpressServer.stopServer();
-  });
-
-  describe('Basic requests', () => {
-    const id = 'test-id';
-    const requests = /** @type ArcBaseRequest[] */ ([
+    await server.startHttp();
+    httpPort = server.httpPort;
+    requests = /** @type ArcBaseRequest[] */ ([
       // 0
       {
-        url: `http://localhost:${expressPort}/v1/get`,
+        url: `http://localhost:${httpPort}/v1/get`,
         method: 'GET',
         headers: 'Host: test.com\nContent-Length: 0',
         payload: 'abc',
       },
       // 1
       {
-        url: `http://localhost:${expressPort}/v1/post`,
+        url: `http://localhost:${httpPort}/v1/post`,
         method: 'POST',
         headers: 'content-type: text/plain',
         payload: Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74]),
@@ -52,24 +50,31 @@ describe('Electron request', () => {
       },
       // 4
       {
-        url: `http://localhost:${expressPort}/v1/get?a=b&c=d`,
+        url: `http://localhost:${httpPort}/v1/get?a=b&c=d`,
         method: 'GET',
         headers: 'x-test: true\naccept: application/json',
       },
       // 5
       {
-        url: `http://localhost:${expressPort}/v1/get`,
+        url: `http://localhost:${httpPort}/v1/get`,
         method: 'GET',
       },
       // 6
       {
-        url: `http://localhost:${expressPort}/v1/post`,
+        url: `http://localhost:${httpPort}/v1/post`,
         method: 'POST',
         headers: 'content-type: application/json',
-        payload: JSON.stringify({ test: true, body: 'some value' }),
+        payload: jsonBody,
       },
     ]);
+  });
 
+  after(async () => {
+    await server.stopHttp();
+  });
+
+  describe('Basic requests', () => {
+    const id = 'test-id';
     const opts = /** @type Options[] */ ([
       {
         timeout: 9500,
@@ -109,7 +114,7 @@ describe('Electron request', () => {
       });
     });
 
-    describe('_connectSsl()', () => {
+    describe('_connectHttps()', () => {
       let request = /** @type ElectronRequest */ (null);
       beforeEach(() => {
         request = new ElectronRequest(requests[2], id, opts[0]);
@@ -117,7 +122,7 @@ describe('Electron request', () => {
 
       it('returns an object', (done) => {
         // @ts-ignore
-        const result = request._connectSsl(undefined, request.uri);
+        const result = request._connectHttps(undefined, request.uri);
         assert.typeOf(result, 'object');
         request.once('load', () => done());
         request.once('error', () => done());
@@ -125,7 +130,7 @@ describe('Electron request', () => {
 
       it('Sets startTime', (done) => {
         // @ts-ignore
-        request._connectSsl(undefined, request.uri);
+        request._connectHttps(undefined, request.uri);
         assert.typeOf(request.stats.startTime, 'number');
         request.once('load', () => done());
         request.once('error', () => done());
@@ -133,7 +138,7 @@ describe('Electron request', () => {
 
       it('Sets messageStart', (done) => {
         // @ts-ignore
-        request._connectSsl(undefined, request.uri);
+        request._connectHttps(undefined, request.uri);
         assert.typeOf(request.stats.messageStart, 'number');
         request.once('load', () => done());
         request.once('error', () => done());
@@ -208,73 +213,67 @@ describe('Electron request', () => {
       });
 
       it('Returns an object', () => {
-        const uri = url.parse(requests[3].url);
+        const uri = new URL(requests[3].url);
         const result = request._createGenericOptions(uri);
         assert.typeOf(result, 'object');
       });
 
       it('Sets protocol', () => {
-        const uri = url.parse(requests[3].url);
+        const uri = new URL(requests[3].url);
         const result = request._createGenericOptions(uri);
         assert.equal(result.protocol, 'https:');
       });
 
       it('Sets host', () => {
-        const uri = url.parse(requests[3].url);
+        const uri = new URL(requests[3].url);
         const result = request._createGenericOptions(uri);
         assert.equal(result.host, 'api.com');
       });
 
       it('Sets port', () => {
-        const uri = url.parse(requests[3].url);
+        const uri = new URL(requests[3].url);
         const result = request._createGenericOptions(uri);
         assert.equal(result.port, '5123');
       });
 
       it('Sets hash', () => {
-        const uri = url.parse(requests[3].url);
+        const uri = new URL(requests[3].url);
         const result = request._createGenericOptions(uri);
         assert.equal(result.hash, '#test');
       });
 
       it('Sets search parameters with path', () => {
-        const uri = url.parse(requests[3].url);
+        const uri = new URL(requests[3].url);
         const result = request._createGenericOptions(uri);
         assert.equal(result.path, '/path?qp1=v1&qp2=v2');
       });
 
-      it('Sets href', () => {
-        const uri = url.parse(requests[3].url);
-        const result = request._createGenericOptions(uri);
-        assert.equal(result.href, 'https://api.com:5123/path?qp1=v1&qp2=v2#test');
-      });
-
       it('Sets method', () => {
-        const uri = url.parse(requests[3].url);
+        const uri = new URL(requests[3].url);
         const result = request._createGenericOptions(uri);
         assert.equal(result.method, 'POST');
       });
 
       it('Sets headers', () => {
-        const uri = url.parse(requests[3].url);
+        const uri = new URL(requests[3].url);
         const result = request._createGenericOptions(uri);
         assert.typeOf(result.headers, 'object');
       });
 
       it('Sets header #1', () => {
-        const uri = url.parse(requests[3].url);
+        const uri = new URL(requests[3].url);
         const result = request._createGenericOptions(uri);
         assert.equal(result.headers.Host, 'localhost');
       });
 
       it('Sets header #2', () => {
-        const uri = url.parse(requests[3].url);
+        const uri = new URL(requests[3].url);
         const result = request._createGenericOptions(uri);
         assert.equal(result.headers['Content-Length'], '3');
       });
 
       it('Sets header #3', () => {
-        const uri = url.parse(requests[3].url);
+        const uri = new URL(requests[3].url);
         const result = request._createGenericOptions(uri);
         assert.equal(result.headers['x-test'], 'true');
       });
@@ -444,7 +443,7 @@ describe('Electron request', () => {
         assert.deepEqual(headers, {
           'x-test': 'true',
           'accept': 'application/json',
-          'host': 'localhost:8125',
+          'host': `localhost:${httpPort}`,
           'connection': 'close',
         });
       });
@@ -459,7 +458,7 @@ describe('Electron request', () => {
         assert.deepEqual(headers, {
           'user-agent': 'advanced-rest-client',
           'accept': '*/*',
-          'host': `localhost:${expressPort}`,
+          'host': `localhost:${httpPort}`,
           'connection': 'close',
         });
       });
@@ -499,17 +498,18 @@ describe('Electron request', () => {
         await request.send();
         const response = await untilBody(request);
         const { body } = response;
-        assert.deepEqual(body, { test: true, body: 'some value' });
+        assert.deepEqual(body, jsonBody);
       });
 
       it('sends the buffer body with the request', async () => {
         const item = { ...requests[6] };
+        // @ts-ignore
         item.payload = Buffer.from(item.payload);
         const request = new ElectronRequest(item, id);
         await request.send();
         const response = await untilBody(request);
         const { body } = response;
-        assert.deepEqual(body, { test: true, body: 'some value' });
+        assert.deepEqual(body, jsonBody);
       });
 
       it('sends the FormData body with the request', async () => {
@@ -521,7 +521,7 @@ describe('Electron request', () => {
         await request.send();
         const response = await untilBody(request);
         const { body } = response;
-        assert.deepEqual(body, { a: 'b' });
+        assert.include(body, 'name="a"');
       });
     });
   });

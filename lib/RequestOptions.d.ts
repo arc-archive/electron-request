@@ -65,6 +65,19 @@ export declare interface Options {
    * compatibility with ARC config object.
    */
   nativeTransport?: boolean;
+  /**
+   * The proxy URI to connect to when making the connection.
+   * It should contain the host and port. Default port is 80.
+   */
+  proxy?: string;
+  /**
+   * The proxy authorization username value.
+   */
+  proxyUsername?: string;
+  /**
+   * The proxy authorization password value.
+   */
+  proxyPassword?: string;
 }
 
 /**
@@ -120,6 +133,19 @@ export declare class RequestOptions {
    * A certificate to use with the request.
    */
   clientCertificate?: ClientCertificate.ClientCertificate;
+  /**
+   * The proxy URI to connect to when making the connection.
+   * It should contain the host and port. Default port is 80.
+   */
+  proxy?: string;
+  /**
+   * The proxy authorization username value.
+   */
+  proxyUsername?: string;
+  /**
+   * The proxy authorization password value.
+   */
+  proxyPassword?: string;
 
   /**
    * Map of options with data types

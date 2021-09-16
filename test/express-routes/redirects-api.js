@@ -55,6 +55,7 @@ class RedirectsApiRoute extends BaseApi {
     res.status(302);
     res.send({
       location: next,
+      headers: req.headers,
     });
   }
 
@@ -82,6 +83,7 @@ class RedirectsApiRoute extends BaseApi {
     res.status(302);
     res.send({
       location: next,
+      headers: req.headers,
     });
   }
 
@@ -109,6 +111,7 @@ class RedirectsApiRoute extends BaseApi {
     res.status(302);
     res.send({
       location: next,
+      headers: req.headers,
     });
   }
 }

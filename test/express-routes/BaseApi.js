@@ -94,5 +94,25 @@ class BaseApi {
       setTimeout(() => resolve(), timeout);
     });
   }
+
+  /**
+   * @param {Request} request
+   * @return {Promise<Buffer>}
+   */
+  async readRequestBuffer(request) {
+    return new Promise((resolve) => {
+      const parts = [];
+      request.on('data', (chunk) => {
+        if (typeof chunk === 'string') {
+          parts.push(Buffer.from(chunk));
+        } else {
+          parts.push(chunk);
+        }
+      });
+      request.on('end', () => {
+        resolve(Buffer.concat(parts));
+      });
+    });
+  }
 }
 module.exports = BaseApi;
