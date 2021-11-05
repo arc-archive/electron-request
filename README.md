@@ -1,4 +1,8 @@
-# Electron request
+# Deprecated
+
+Use `@advanced-rest-client/electron` instead.
+
+------
 
 The HTTP engine for the Advanced REST Client application.
 

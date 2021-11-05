@@ -8,6 +8,7 @@ import { RequestOptions } from 'https';
 
 /**
  * A HTTP client for ARC that uses Electron APIs to make a request.
+ * @deprecated Use `@advanced-rest-client/electron` instead.
  */
 export declare class ElectronRequest extends BaseRequest {
   /**

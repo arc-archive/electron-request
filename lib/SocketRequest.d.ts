@@ -8,6 +8,7 @@ import { ConnectionOptions } from 'tls';
 
 /**
  * Transport library for Advanced REST Client for node via Electron app.
+ * @deprecated Use `@advanced-rest-client/electron` instead.
  */
 export declare class SocketRequest extends BaseRequest {
   state: number;
